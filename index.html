@@ -182,22 +182,28 @@ body{background-image:repeating-linear-gradient(0deg,transparent,transparent 59p
 const {useState, useEffect, useCallback, useRef} = React;
 
 // ── Storage helpers ─────────────────────────────────────────────────────────
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwbU11hf5fhPljI22ynXMrzj86yAKVbWc5hficPmvQQlg2t_Vyo5-XeSqUL3Ojleewz/exec';
+const SUPABASE_URL = 'https://pwqdgulwrddltujjefme.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_vYR_FWX8bZB-K5y3yfaq8Q_nr47ZFZI';
 const LS_USER = 'vm26_user';
 const LS_TIP  = 'vm26_tipping';
 
 function lsGet(key) { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } }
 function lsSet(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
 
-async function postToSheets(payload) {
-  if (!APPS_SCRIPT_URL) return { ok: true };
-  const res = await fetch(APPS_SCRIPT_URL, {
-    method: 'POST',
-    body: JSON.stringify(payload),
-    headers: { 'Content-Type': 'text/plain' },
-    mode: 'no-cors',
-  });
-  return { ok: true };
+async function upsertTipping(data) {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return;
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/tippinger`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates',
+      },
+      body: JSON.stringify({ email: data.user.email, navn: data.user.name, data, levert_tid: new Date().toISOString() }),
+    });
+  } catch(e) { console.warn('Supabase feil:', e); }
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -472,7 +478,7 @@ function KnockoutStep({ groupScores, thirdPlace, picks, setPicks, onNext, onBack
   }
 
   const roundOrder = ['R32','R16','QF','SF','BRONZE','FINAL'];
-  const roundLabels = { R32:'Runde av 32', R16:'Runde av 16', QF:'Kvartfinale', SF:'Semifinale', BRONZE:'Bronsefinale', FINAL:'Finale' };
+  const roundLabels = { R32:'16-delsfinaler', R16:'Åttendelsfinaler', QF:'Kvartfinaler', SF:'Semifinaler', BRONZE:'Bronsefinale', FINAL:'Finale' };
 
   function canAccessRound(roundKey) {
     const idx = roundOrder.indexOf(roundKey);
@@ -532,9 +538,19 @@ function KnockoutStep({ groupScores, thirdPlace, picks, setPicks, onNext, onBack
 
       <div className="btn-row">
         <button className="btn btn-ghost" onClick={onBack}>← Tilbake</button>
-        <button className="btn btn-primary" disabled={!allFilled} onClick={onNext}>
-          {allFilled ? 'Til utmerkelser →' : 'Fyll inn alle sluttspillrunder'}
-        </button>
+        {(() => {
+          const curIdx = roundOrder.indexOf(activeRound);
+          const nextRound = roundOrder[curIdx + 1];
+          const curFilled = isRoundFilled(activeRound);
+          if (nextRound && curFilled) {
+            return <button className="btn btn-primary" onClick={()=>setActiveRound(nextRound)}>
+              {roundLabels[nextRound]} →
+            </button>;
+          }
+          return <button className="btn btn-primary" disabled={!allFilled} onClick={onNext}>
+            {allFilled ? 'Til standouts →' : 'Lever inn sluttspill'}
+          </button>;
+        })()}
       </div>
     </div>
   );
@@ -821,7 +837,7 @@ function AwardsStep({ topScorer, setTopScorer, topAssist, setTopAssist, onNext, 
   return (
     <div>
       <div className="card">
-        <div className="section-title">Individuelle utmerkelser</div>
+        <div className="section-title">Standouts</div>
         <div className="section-sub">Hvem tror du stikker av med toppscorer og flest assist? Begynn å skrive for forslag.</div>
 
         <div className="award-card">
@@ -964,7 +980,21 @@ function App() {
 
   // Restore step if user already registered
   useEffect(() => {
-    if (submitted) { setStep(6); return; }
+    if (submitted) {
+      // Ensure submitted tipping is in the shared list (recovery for old submissions)
+      if (user) {
+        const tip = lsGet(LS_TIP);
+        if (tip) {
+          const tipping = { user, groupScores: tip.groupScores, thirdPlace: tip.thirdPlace, knockoutPicks: tip.knockoutPicks, topScorer: tip.topScorer, topAssist: tip.topAssist, submittedAt: tip.submittedAt || new Date().toISOString() };
+          const existing = lsGet('vm26_submitted_tippings') || [];
+          if (!existing.some(t => t.user?.email === user.email)) {
+            const updated = [...existing, tipping];
+            lsSet('vm26_submitted_tippings', updated);
+          }
+        }
+      }
+      setStep(6); return;
+    }
     if (user) setStep(s => Math.max(s, 1));
   }, []);
 
@@ -988,7 +1018,7 @@ function App() {
     const updated = existing.filter(t => t.user?.email !== user.email);
     updated.push(tipping);
     lsSet('vm26_submitted_tippings', updated);
-    await postToSheets({ action: 'submitTipping', data: tipping });
+    await upsertTipping(tipping);
     lsSet(LS_TIP, { ...lsGet(LS_TIP), submitted: true });
     setSubmitted(true);
     setStep(6);
