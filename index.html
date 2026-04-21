@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VM 2026 Tipping – Consort</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400&family=Barlow+Condensed:wght@600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="data.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#070d18;--surface:#0d1826;--card:#122030;--elevated:#19304a;
+  --accent:#00d96a;--accent2:rgba(0,217,106,.13);--glow:0 0 24px rgba(0,217,106,.25);
+  --txt:#e8f0fa;--txt2:#7a9cc0;--txt3:#3d5670;
+  --border:rgba(255,255,255,.07);--gold:#ffd700;--red:#ff4f5e;
+  --r:12px;
+}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Barlow',sans-serif;font-size:16px;line-height:1.5;}
+body{background-image:repeating-linear-gradient(0deg,transparent,transparent 59px,rgba(255,255,255,.018) 59px,rgba(255,255,255,.018) 60px),repeating-linear-gradient(90deg,transparent,transparent 59px,rgba(255,255,255,.018) 59px,rgba(255,255,255,.018) 60px);}
+
+/* Layout */
+.shell{min-height:100vh;display:flex;flex-direction:column;}
+.topbar{display:flex;align-items:center;gap:12px;padding:16px 24px;border-bottom:1px solid var(--border);background:rgba(7,13,24,.85);backdrop-filter:blur(10px);position:sticky;top:0;z-index:100;}
+.topbar img{height:34px;width:34px;object-fit:contain;}
+.topbar-title{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;letter-spacing:.04em;color:var(--accent);text-transform:uppercase;}
+.topbar-sub{font-size:12px;color:var(--txt2);margin-left:auto;}
+.topbar a{color:var(--txt2);font-size:13px;text-decoration:none;padding:6px 12px;border:1px solid var(--border);border-radius:6px;transition:all .2s;}
+.topbar a:hover{border-color:var(--accent);color:var(--accent);}
+
+.main{flex:1;max-width:860px;width:100%;margin:0 auto;padding:32px 20px 80px;}
+
+/* Progress */
+.progress{display:flex;gap:4px;margin-bottom:32px;}
+.progress-step{height:4px;flex:1;background:var(--elevated);border-radius:2px;transition:background .4s;}
+.progress-step.done{background:var(--accent);}
+.progress-step.active{background:rgba(0,217,106,.5);}
+
+/* Cards */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:28px;}
+.card+.card{margin-top:16px;}
+.section-title{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900;letter-spacing:.05em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;}
+.section-sub{color:var(--txt2);font-size:14px;margin-bottom:24px;}
+
+/* Forms */
+.field{margin-bottom:18px;}
+.field label{display:block;font-size:13px;font-weight:600;color:var(--txt2);margin-bottom:6px;letter-spacing:.04em;text-transform:uppercase;}
+.field input,.field select{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px 16px;color:var(--txt);font-family:'Barlow',sans-serif;font-size:15px;outline:none;transition:border-color .2s;}
+.field input:focus,.field select:focus{border-color:var(--accent);}
+.field input::placeholder{color:var(--txt3);}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:8px;font-family:'Barlow',sans-serif;font-size:15px;font-weight:700;cursor:pointer;border:none;transition:all .2s;letter-spacing:.02em;}
+.btn-primary{background:var(--accent);color:#000;}
+.btn-primary:hover{background:#00f07a;box-shadow:var(--glow);}
+.btn-ghost{background:transparent;color:var(--txt2);border:1px solid var(--border);}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn-row{display:flex;gap:12px;margin-top:28px;align-items:center;}
+
+/* Group game grid */
+.group-tab-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;}
+.group-tab{padding:6px 12px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--txt2);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;font-family:'Barlow',sans-serif;}
+.group-tab.active{background:var(--accent);color:#000;border-color:var(--accent);}
+.group-tab.filled{border-color:rgba(0,217,106,.4);color:rgba(0,217,106,.7);}
+
+.game-grid{display:grid;gap:10px;}
+.game-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;background:var(--surface);border-radius:10px;padding:12px 16px;border:1px solid var(--border);}
+.game-team{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px;}
+.game-team.right{flex-direction:row-reverse;text-align:right;}
+.game-team .flag{font-size:20px;line-height:1;}
+.score-inputs{display:flex;align-items:center;gap:6px;}
+.score-box{display:flex;align-items:center;gap:0;background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+.score-box button{background:none;border:none;color:var(--txt2);padding:6px 10px;cursor:pointer;font-size:14px;font-weight:700;transition:color .15s;}
+.score-box button:hover{color:var(--accent);}
+.score-box input{width:36px;background:none;border:none;text-align:center;color:var(--txt);font-family:'Barlow',sans-serif;font-size:16px;font-weight:700;outline:none;padding:6px 0;}
+.score-sep{color:var(--txt3);font-size:14px;font-weight:600;}
+
+/* Group table */
+.group-table{width:100%;border-collapse:collapse;margin-top:16px;font-size:13px;}
+.group-table th{color:var(--txt3);font-weight:600;text-align:left;padding:4px 8px;font-size:11px;text-transform:uppercase;letter-spacing:.06em;}
+.group-table th:not(:first-child){text-align:center;}
+.group-table td{padding:7px 8px;border-top:1px solid var(--border);}
+.group-table td:not(:first-child){text-align:center;color:var(--txt2);}
+.group-table .rank{font-weight:800;font-size:11px;color:var(--txt3);width:20px;}
+.group-table .tname{font-weight:600;color:var(--txt);}
+.group-table .pts{font-weight:800;color:var(--accent);}
+.rank-badge{display:inline-block;width:18px;height:18px;border-radius:50%;font-size:10px;font-weight:800;text-align:center;line-height:18px;}
+.rank-1{background:var(--gold);color:#000;}
+.rank-2{background:var(--elevated);color:var(--txt2);}
+.rank-3{background:rgba(255,255,255,.08);color:var(--txt3);}
+.rank-4{background:transparent;color:var(--txt3);}
+
+/* Third place step */
+.tp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;}
+.tp-card{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:12px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:10px;}
+.tp-card:hover{border-color:var(--accent);background:var(--accent2);}
+.tp-card.selected{border-color:var(--accent);background:var(--accent2);box-shadow:var(--glow);}
+.tp-card.disabled:not(.selected){opacity:.4;cursor:not-allowed;}
+.tp-flag{font-size:22px;}
+.tp-info{flex:1;min-width:0;}
+.tp-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tp-pos{font-size:11px;color:var(--txt2);}
+.tp-check{color:var(--accent);font-size:16px;font-weight:800;flex-shrink:0;}
+.tp-counter{font-size:13px;color:var(--txt2);margin-bottom:14px;}
+.tp-counter span{color:var(--accent);font-weight:700;}
+
+/* Knockout bracket */
+.ko-round-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:24px;}
+.ko-tab{padding:7px 14px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--txt2);font-size:13px;font-weight:600;cursor:pointer;font-family:'Barlow',sans-serif;transition:all .2s;}
+.ko-tab.active{background:var(--accent);color:#000;border-color:var(--accent);}
+.ko-tab.filled{border-color:rgba(0,217,106,.4);color:rgba(0,217,106,.6);}
+.ko-tab:disabled{opacity:.3;cursor:not-allowed;}
+
+.ko-match{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:10px;}
+.ko-match-label{padding:6px 14px;background:var(--elevated);font-size:11px;font-weight:700;color:var(--txt3);letter-spacing:.06em;text-transform:uppercase;}
+.ko-team{display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;transition:background .15s;border-top:1px solid var(--border);}
+.ko-team:first-of-type{border-top:none;}
+.ko-team:hover:not(.tbd):not(.picked-other){background:var(--elevated);}
+.ko-team .flag{font-size:22px;}
+.ko-team .tname{flex:1;font-weight:600;font-size:14px;}
+.ko-team.picked{background:var(--accent2);border-left:3px solid var(--accent);}
+.ko-team.picked .tname{color:var(--accent);}
+.ko-team.tbd{cursor:default;}
+.ko-team .tbd-text{color:var(--txt3);font-style:italic;font-size:13px;}
+.ko-match-info{padding:6px 14px;font-size:11px;color:var(--txt3);text-align:center;}
+
+/* Awards */
+.award-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;display:flex;gap:16px;align-items:flex-start;margin-bottom:12px;}
+.award-icon{font-size:28px;}
+.award-body{flex:1;}
+.award-label{font-weight:700;font-size:15px;margin-bottom:4px;}
+.award-desc{font-size:13px;color:var(--txt2);margin-bottom:10px;}
+.award-pts{display:inline-block;background:var(--accent2);border:1px solid rgba(0,217,106,.3);color:var(--accent);font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;margin-bottom:10px;}
+.award-input{width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--txt);font-family:'Barlow',sans-serif;font-size:14px;outline:none;transition:border-color .2s;}
+.award-input:focus{border-color:var(--accent);}
+.award-input::placeholder{color:var(--txt3);}
+
+/* Review */
+.review-section{margin-bottom:24px;}
+.review-section h3{font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:800;text-transform:uppercase;color:var(--txt2);margin-bottom:12px;letter-spacing:.05em;}
+.review-row{display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--border);font-size:14px;}
+.review-row:first-child{border-top:none;}
+.review-key{color:var(--txt2);}
+.review-val{font-weight:600;color:var(--txt);}
+.review-group-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;}
+.review-group{background:var(--surface);border-radius:8px;padding:12px;font-size:13px;}
+.review-group-head{font-weight:700;color:var(--accent);margin-bottom:6px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;}
+
+/* Success */
+.success-wrap{text-align:center;padding:60px 20px;}
+.success-icon{font-size:64px;margin-bottom:20px;}
+.success-title{font-family:'Barlow Condensed',sans-serif;font-size:36px;font-weight:900;text-transform:uppercase;color:var(--accent);margin-bottom:8px;}
+.success-sub{color:var(--txt2);font-size:16px;margin-bottom:28px;}
+
+/* Misc */
+.divider{border:none;border-top:1px solid var(--border);margin:24px 0;}
+.tag{display:inline-flex;align-items:center;gap:4px;background:var(--accent2);border:1px solid rgba(0,217,106,.25);color:var(--accent);font-size:11px;font-weight:700;padding:3px 8px;border-radius:4px;letter-spacing:.04em;}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--elevated);border-radius:6px;padding:4px 10px;font-size:13px;font-weight:600;margin:3px;}
+.error{color:var(--red);font-size:13px;margin-top:6px;}
+.deadline-banner{background:linear-gradient(135deg,rgba(0,217,106,.08),rgba(0,217,106,.03));border:1px solid rgba(0,217,106,.2);border-radius:10px;padding:14px 18px;margin-bottom:24px;display:flex;align-items:center;gap:12px;font-size:14px;}
+.deadline-banner .icon{font-size:20px;}
+.deadline-banner strong{color:var(--accent);}
+
+/* Already submitted */
+.submitted-banner{background:rgba(0,217,106,.06);border:1px solid rgba(0,217,106,.2);border-radius:10px;padding:14px 18px;margin-bottom:24px;font-size:14px;color:var(--txt2);}
+
+@media(max-width:600px){
+  .main{padding:20px 14px 60px;}
+  .game-row{grid-template-columns:1fr auto 1fr;gap:6px;padding:10px 10px;}
+  .game-team .flag{font-size:17px;}
+  .game-team{font-size:13px;gap:5px;}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState, useEffect, useCallback, useRef} = React;
+
+// ── Storage helpers ─────────────────────────────────────────────────────────
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwbU11hf5fhPljI22ynXMrzj86yAKVbWc5hficPmvQQlg2t_Vyo5-XeSqUL3Ojleewz/exec';
+const LS_USER = 'vm26_user';
+const LS_TIP  = 'vm26_tipping';
+
+function lsGet(key) { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } }
+function lsSet(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+
+async function postToSheets(payload) {
+  if (!APPS_SCRIPT_URL) return { ok: true };
+  const res = await fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+    headers: { 'Content-Type': 'text/plain' },
+    mode: 'no-cors',
+  });
+  return { ok: true };
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+const fmt = t => TEAMS[t] ? `${TEAMS[t].flag} ${TEAMS[t].name}` : (t || '?');
+
+function teamDisplay(team) {
+  if (!team) return null;
+  const t = TEAMS[team];
+  return t ? <span className="chip"><span>{t.flag}</span>{t.name}</span> : team;
+}
+
+function getGroupAllStandings(groupScores) {
+  const result = {};
+  Object.keys(GROUPS).forEach(g => { result[g] = calcStandings(g, groupScores || {}); });
+  return result;
+}
+
+function getThirdPlaceTeams(groupStandings) {
+  return Object.entries(groupStandings)
+    .map(([g, rows]) => ({ group: g, team: rows[2]?.team, pts: rows[2]?.pts ?? 0, gd: rows[2]?.gd ?? 0 }))
+    .filter(x => x.team);
+}
+
+// ── ScoreInput ───────────────────────────────────────────────────────────────
+function ScoreInput({ value, onChange }) {
+  const v = value === '' || value === undefined ? '' : String(value);
+  const n = parseInt(v);
+  const inc = () => onChange(isNaN(n) ? 0 : Math.min(n + 1, 20));
+  const dec = () => onChange(isNaN(n) ? 0 : Math.max(n - 1, 0));
+  return (
+    <div className="score-box">
+      <button onClick={dec}>−</button>
+      <input type="number" min="0" max="20" value={v}
+        onChange={e => { const x = parseInt(e.target.value); onChange(isNaN(x) ? '' : Math.max(0,Math.min(20,x))); }}/>
+      <button onClick={inc}>+</button>
+    </div>
+  );
+}
+
+// ── GroupTable (mini) ────────────────────────────────────────────────────────
+function GroupTableMini({ groupId, scores }) {
+  const rows = calcStandings(groupId, scores);
+  const positions = ['rank-1','rank-2','rank-3','rank-4'];
+  return (
+    <table className="group-table">
+      <thead><tr>
+        <th></th><th style={{textAlign:'left'}}>Lag</th><th>K</th><th>P</th><th>M</th><th>Pts</th>
+      </tr></thead>
+      <tbody>{rows.map((r, i) => (
+        <tr key={r.team}>
+          <td><span className={`rank-badge ${positions[i]}`}>{i+1}</span></td>
+          <td className="tname">{TEAMS[r.team]?.flag} {TEAMS[r.team]?.name}</td>
+          <td>{r.played}</td>
+          <td style={{color: r.gd > 0 ? 'var(--accent)' : r.gd < 0 ? 'var(--red)' : 'var(--txt2)'}}>{r.gd > 0 ? '+' : ''}{r.gd}</td>
+          <td>{r.gf}</td>
+          <td className="pts">{r.pts}</td>
+        </tr>
+      ))}</tbody>
+    </table>
+  );
+}
+
+// ── Step 1: Registration ─────────────────────────────────────────────────────
+function RegistrationStep({ onDone }) {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [err, setErr] = useState('');
+
+  function submit() {
+    if (!name.trim()) { setErr('Skriv inn navn.'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setErr('Ugyldig e-postadresse.'); return; }
+    onDone({ name: name.trim(), email: email.trim().toLowerCase() });
+  }
+
+  return (
+    <div className="card">
+      <div className="section-title">Registrering</div>
+      <div className="section-sub">Fyll inn navn og e-post for å delta i VM-tippingen 2026.</div>
+      <div className="deadline-banner">
+        <span className="icon">⏰</span>
+        <span>Frist for å levere: <strong>10. juni 2026 kl. 16:00</strong></span>
+      </div>
+      <div className="field">
+        <label>Fullt navn</label>
+        <input value={name} onChange={e=>setName(e.target.value)} placeholder="Ola Nordmann" onKeyDown={e=>e.key==='Enter'&&submit()}/>
+      </div>
+      <div className="field">
+        <label>E-postadresse</label>
+        <input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="ola@consort.no" onKeyDown={e=>e.key==='Enter'&&submit()}/>
+      </div>
+      {err && <div className="error">⚠ {err}</div>}
+      <div className="btn-row">
+        <button className="btn btn-primary" onClick={submit}>Start tipping →</button>
+      </div>
+    </div>
+  );
+}
+
+// ── Step 2: Group tipping ────────────────────────────────────────────────────
+function GroupStep({ groupScores, setGroupScores, onNext, onBack }) {
+  const [activeGroup, setActiveGroup] = useState('A');
+
+  const groupIds = Object.keys(GROUPS);
+
+  function isGroupFilled(g) {
+    return GROUP_GAMES[g].every(game => {
+      const s = groupScores[game.id];
+      return s && s.home !== '' && s.away !== '' && s.home !== undefined && s.away !== undefined;
+    });
+  }
+
+  function allFilled() { return groupIds.every(isGroupFilled); }
+
+  function setScore(gameId, side, val) {
+    setGroupScores(prev => {
+      const updated = { ...prev, [gameId]: { ...(prev[gameId] || {}), [side]: val } };
+      return updated;
+    });
+  }
+
+  const games = GROUP_GAMES[activeGroup];
+
+  return (
+    <div>
+      <div className="card" style={{marginBottom:16}}>
+        <div className="section-title">Gruppespill</div>
+        <div className="section-sub">Tipp resultater for alle 72 kamper. Klikk på en gruppe for å fylle inn.</div>
+        <div className="group-tab-row">
+          {groupIds.map(g => (
+            <button key={g} className={`group-tab ${activeGroup===g?'active':''} ${activeGroup!==g && isGroupFilled(g)?'filled':''}`}
+              onClick={()=>setActiveGroup(g)}>
+              Gruppe {g}{isGroupFilled(g) && activeGroup!==g ? ' ✓' : ''}
+            </button>
+          ))}
+        </div>
+        <div style={{marginBottom:16}}>
+          <div style={{fontSize:13,color:'var(--txt2)',marginBottom:14}}>
+            <span style={{color:'var(--accent)',fontWeight:700}}>Gruppe {activeGroup}</span> — {GROUPS[activeGroup].map(t=>TEAMS[t]?.name).join(', ')}
+          </div>
+          <div className="game-grid">
+            {games.map(game => {
+              const sc = groupScores[game.id] || {};
+              return (
+                <div key={game.id} className="game-row">
+                  <div className="game-team">
+                    <span className="flag">{TEAMS[game.home]?.flag}</span>
+                    <span>{TEAMS[game.home]?.name}</span>
+                  </div>
+                  <div className="score-inputs">
+                    <ScoreInput value={sc.home ?? ''} onChange={v=>setScore(game.id,'home',v)}/>
+                    <span className="score-sep">–</span>
+                    <ScoreInput value={sc.away ?? ''} onChange={v=>setScore(game.id,'away',v)}/>
+                  </div>
+                  <div className="game-team right">
+                    <span>{TEAMS[game.away]?.name}</span>
+                    <span className="flag">{TEAMS[game.away]?.flag}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        <GroupTableMini groupId={activeGroup} scores={groupScores}/>
+      </div>
+
+      <div className="btn-row">
+        <button className="btn btn-ghost" onClick={onBack}>← Tilbake</button>
+        <button className="btn btn-primary" disabled={!allFilled()} onClick={onNext}>
+          {allFilled() ? 'Til tredjeplasser →' : `Fyll inn alle kamper (${groupIds.filter(isGroupFilled).length}/12)`}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Step 3: Third place selection ────────────────────────────────────────────
+function ThirdPlaceStep({ groupScores, thirdPlace, setThirdPlace, onNext, onBack }) {
+  const standings = getGroupAllStandings(groupScores);
+  const candidates = Object.keys(GROUPS).map(g => {
+    const rows = calcStandings(g, groupScores);
+    const r = rows[2];
+    return r ? { group: g, team: r.team, pts: r.pts, gd: r.gd, gf: r.gf } : null;
+  }).filter(Boolean);
+
+  function toggle(team) {
+    setThirdPlace(prev => {
+      if (prev.includes(team)) return prev.filter(t => t !== team);
+      if (prev.length >= 8) return prev;
+      return [...prev, team];
+    });
+  }
+
+  return (
+    <div>
+      <div className="card">
+        <div className="section-title">Tredjeplasser</div>
+        <div className="section-sub">8 av de 12 tredjeplasslagene går videre til runde av 32. Velg hvilke 8 du tror kvalifiserer.</div>
+        <div className="tp-counter">Valgt: <span>{thirdPlace.length}/8</span></div>
+        <div className="tp-grid">
+          {candidates.map(({group, team, pts, gd, gf}) => {
+            const selected = thirdPlace.includes(team);
+            const full = thirdPlace.length >= 8;
+            return (
+              <div key={team} className={`tp-card ${selected?'selected':''} ${full&&!selected?'disabled':''}`}
+                onClick={()=>toggle(team)}>
+                <span className="tp-flag">{TEAMS[team]?.flag}</span>
+                <div className="tp-info">
+                  <div className="tp-name">{TEAMS[team]?.name}</div>
+                  <div className="tp-pos">Gruppe {group} · {pts} pts · {gd>=0?'+':''}{gd}</div>
+                </div>
+                {selected && <span className="tp-check">✓</span>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+      <div className="btn-row">
+        <button className="btn btn-ghost" onClick={onBack}>← Tilbake</button>
+        <button className="btn btn-primary" disabled={thirdPlace.length !== 8} onClick={onNext}>
+          {thirdPlace.length===8 ? 'Til sluttspill →' : `Velg ${8-thirdPlace.length} til`}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Step 4: Knockout bracket ─────────────────────────────────────────────────
+function KnockoutStep({ groupScores, thirdPlace, picks, setPicks, onNext, onBack }) {
+  const [activeRound, setActiveRound] = useState('R32');
+  const standings = getGroupAllStandings(groupScores);
+
+  function resolveTeam(slot) {
+    return resolveSlot(slot, standings, thirdPlace, picks);
+  }
+
+  function resolveMatchPair(match) {
+    if (match.prev) {
+      if (match.loser) {
+        const allSF = SF;
+        const sfA = allSF.find(m=>m.id===match.prev[0]);
+        const sfB = allSF.find(m=>m.id===match.prev[1]);
+        const wa = picks[match.prev[0]], wb = picks[match.prev[1]];
+        const pairA = sfA ? resolveMatchPairById(sfA) : [null,null];
+        const pairB = sfB ? resolveMatchPairById(sfB) : [null,null];
+        const loserA = wa ? pairA.find(t=>t!==wa)||null : null;
+        const loserB = wb ? pairB.find(t=>t!==wb)||null : null;
+        return [loserA, loserB];
+      }
+      return [picks[match.prev[0]]||null, picks[match.prev[1]]||null];
+    }
+    return [resolveTeam(match.home), resolveTeam(match.away)];
+  }
+
+  function resolveMatchPairById(match) {
+    if (!match) return [null,null];
+    if (match.prev) return [picks[match.prev[0]]||null, picks[match.prev[1]]||null];
+    return [resolveTeam(match.home), resolveTeam(match.away)];
+  }
+
+  function pickWinner(matchId, team) {
+    if (!team) return;
+    setPicks(prev => ({ ...prev, [matchId]: team }));
+  }
+
+  function isRoundFilled(roundKey) {
+    const matches = getRoundMatches(roundKey);
+    return matches.every(m => picks[m.id]);
+  }
+
+  function getRoundMatches(roundKey) {
+    return { R32, R16, QF, SF, BRONZE: [BRONZE], FINAL: [FINAL] }[roundKey] || [];
+  }
+
+  const roundOrder = ['R32','R16','QF','SF','BRONZE','FINAL'];
+  const roundLabels = { R32:'Runde av 32', R16:'Runde av 16', QF:'Kvartfinale', SF:'Semifinale', BRONZE:'Bronsefinale', FINAL:'Finale' };
+
+  function canAccessRound(roundKey) {
+    const idx = roundOrder.indexOf(roundKey);
+    if (idx === 0) return true;
+    return isRoundFilled(roundOrder[idx-1]) || (roundKey==='BRONZE' && isRoundFilled('SF'));
+  }
+
+  const allFilled = roundOrder.every(isRoundFilled);
+
+  const currentMatches = getRoundMatches(activeRound);
+
+  return (
+    <div>
+      <div className="card" style={{marginBottom:16}}>
+        <div className="section-title">Sluttspill</div>
+        <div className="section-sub">Klikk på laget du tror vinner hver kamp – runde for runde.</div>
+        <div className="ko-round-tabs">
+          {roundOrder.map(rk => (
+            <button key={rk} disabled={!canAccessRound(rk)}
+              className={`ko-tab ${activeRound===rk?'active':''} ${activeRound!==rk&&isRoundFilled(rk)?'filled':''}`}
+              onClick={()=>setActiveRound(rk)}>
+              {roundLabels[rk]}{isRoundFilled(rk)&&activeRound!==rk?' ✓':''}
+            </button>
+          ))}
+        </div>
+
+        {currentMatches.map((match, idx) => {
+          const [teamA, teamB] = resolveMatchPair(match);
+          const picked = picks[match.id];
+          const matchNum = activeRound==='R32' ? idx+1 : null;
+
+          return (
+            <div key={match.id} className="ko-match">
+              <div className="ko-match-label">
+                {matchNum ? `Kamp ${matchNum} · ` : ''}{roundLabels[activeRound]}
+                {match.loser ? ' (Tredjeplassen)' : ''}
+              </div>
+              {[teamA, teamB].map((team, ti) => {
+                const isTbd = !team;
+                const isPicked = picked === team && !isTbd;
+                const isOther = picked && picked !== team && !isTbd;
+                return (
+                  <div key={ti}
+                    className={`ko-team ${isTbd?'tbd':''} ${isPicked?'picked':''} ${isOther?'picked-other':''}`}
+                    onClick={()=>!isTbd&&pickWinner(match.id, team)}>
+                    {isTbd
+                      ? <><span className="flag">🏳</span><span className="tbd-text">Avventer tidligere runde…</span></>
+                      : <><span className="flag">{TEAMS[team]?.flag}</span><span className="tname">{TEAMS[team]?.name}</span>{isPicked && <span style={{color:'var(--accent)',fontWeight:800}}>✓ Valgt</span>}</>
+                    }
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="btn-row">
+        <button className="btn btn-ghost" onClick={onBack}>← Tilbake</button>
+        <button className="btn btn-primary" disabled={!allFilled} onClick={onNext}>
+          {allFilled ? 'Til utmerkelser →' : 'Fyll inn alle sluttspillrunder'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Player database ──────────────────────────────────────────────────────────
+const PLAYERS = [
+  // Norge (I)
+  { name: 'Erling Haaland', team: 'NOR', flag: '🇳🇴', info: 'Manchester City' },
+  { name: 'Martin Ødegaard', team: 'NOR', flag: '🇳🇴', info: 'Arsenal' },
+  { name: 'Alexander Sørloth', team: 'NOR', flag: '🇳🇴', info: 'Atlético Madrid' },
+  { name: 'Antonio Nusa', team: 'NOR', flag: '🇳🇴', info: 'RB Leipzig' },
+  { name: 'Sander Berge', team: 'NOR', flag: '🇳🇴', info: 'Fulham' },
+  // Argentina (J)
+  { name: 'Lionel Messi', team: 'ARG', flag: '🇦🇷', info: 'Inter Miami' },
+  { name: 'Lautaro Martínez', team: 'ARG', flag: '🇦🇷', info: 'Inter' },
+  { name: 'Julián Álvarez', team: 'ARG', flag: '🇦🇷', info: 'Atlético Madrid' },
+  { name: 'Alejandro Garnacho', team: 'ARG', flag: '🇦🇷', info: 'Manchester United' },
+  { name: 'Paulo Dybala', team: 'ARG', flag: '🇦🇷', info: 'Roma' },
+  { name: 'Ángel Di María', team: 'ARG', flag: '🇦🇷', info: 'Benfica' },
+  { name: 'Rodrigo De Paul', team: 'ARG', flag: '🇦🇷', info: 'Atlético Madrid' },
+  // Brasil (C)
+  { name: 'Vinicius Jr.', team: 'BRA', flag: '🇧🇷', info: 'Real Madrid' },
+  { name: 'Rodrygo', team: 'BRA', flag: '🇧🇷', info: 'Real Madrid' },
+  { name: 'Raphinha', team: 'BRA', flag: '🇧🇷', info: 'Barcelona' },
+  { name: 'Endrick', team: 'BRA', flag: '🇧🇷', info: 'Real Madrid' },
+  { name: 'Gabriel Martinelli', team: 'BRA', flag: '🇧🇷', info: 'Arsenal' },
+  { name: 'Lucas Paquetá', team: 'BRA', flag: '🇧🇷', info: 'West Ham' },
+  { name: 'Richarlison', team: 'BRA', flag: '🇧🇷', info: 'Tottenham' },
+  { name: 'Gabriel Jesus', team: 'BRA', flag: '🇧🇷', info: 'Arsenal' },
+  // Frankrike (I)
+  { name: 'Kylian Mbappé', team: 'FRA', flag: '🇫🇷', info: 'Real Madrid' },
+  { name: 'Antoine Griezmann', team: 'FRA', flag: '🇫🇷', info: 'Atlético Madrid' },
+  { name: 'Ousmane Dembélé', team: 'FRA', flag: '🇫🇷', info: 'Paris Saint-Germain' },
+  { name: 'Marcus Thuram', team: 'FRA', flag: '🇫🇷', info: 'Inter' },
+  { name: 'Randal Kolo Muani', team: 'FRA', flag: '🇫🇷', info: 'Juventus' },
+  { name: 'Bradley Barcola', team: 'FRA', flag: '🇫🇷', info: 'Paris Saint-Germain' },
+  { name: 'Aurélien Tchouaméni', team: 'FRA', flag: '🇫🇷', info: 'Real Madrid' },
+  // England (L)
+  { name: 'Harry Kane', team: 'ENG', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', info: 'Bayern München' },
+  { name: 'Phil Foden', team: 'ENG', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', info: 'Manchester City' },
+  { name: 'Jude Bellingham', team: 'ENG', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', info: 'Real Madrid' },
+  { name: 'Bukayo Saka', team: 'ENG', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', info: 'Arsenal' },
+  { name: 'Marcus Rashford', team: 'ENG', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', info: 'Manchester United' },
+  { name: 'Cole Palmer', team: 'ENG', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', info: 'Chelsea' },
+  { name: 'Ollie Watkins', team: 'ENG', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', info: 'Aston Villa' },
+  { name: 'Declan Rice', team: 'ENG', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', info: 'Arsenal' },
+  // Spania (H)
+  { name: 'Álvaro Morata', team: 'ESP', flag: '🇪🇸', info: 'Atlético Madrid' },
+  { name: 'Pedri', team: 'ESP', flag: '🇪🇸', info: 'Barcelona' },
+  { name: 'Lamine Yamal', team: 'ESP', flag: '🇪🇸', info: 'Barcelona' },
+  { name: 'Nico Williams', team: 'ESP', flag: '🇪🇸', info: 'Athletic Club' },
+  { name: 'Dani Olmo', team: 'ESP', flag: '🇪🇸', info: 'Barcelona' },
+  { name: 'Ferran Torres', team: 'ESP', flag: '🇪🇸', info: 'Barcelona' },
+  { name: 'Mikel Oyarzabal', team: 'ESP', flag: '🇪🇸', info: 'Real Sociedad' },
+  // Portugal (K)
+  { name: 'Cristiano Ronaldo', team: 'POR', flag: '🇵🇹', info: 'Al Nassr' },
+  { name: 'Bruno Fernandes', team: 'POR', flag: '🇵🇹', info: 'Manchester United' },
+  { name: 'Rafael Leão', team: 'POR', flag: '🇵🇹', info: 'AC Milan' },
+  { name: 'Bernardo Silva', team: 'POR', flag: '🇵🇹', info: 'Manchester City' },
+  { name: 'João Félix', team: 'POR', flag: '🇵🇹', info: 'Chelsea' },
+  { name: 'Gonçalo Ramos', team: 'POR', flag: '🇵🇹', info: 'Paris Saint-Germain' },
+  { name: 'Pedro Neto', team: 'POR', flag: '🇵🇹', info: 'Chelsea' },
+  // Tyskland (E)
+  { name: 'Florian Wirtz', team: 'GER', flag: '🇩🇪', info: 'Bayer Leverkusen' },
+  { name: 'Jamal Musiala', team: 'GER', flag: '🇩🇪', info: 'Bayern München' },
+  { name: 'Kai Havertz', team: 'GER', flag: '🇩🇪', info: 'Arsenal' },
+  { name: 'Leroy Sané', team: 'GER', flag: '🇩🇪', info: 'Bayern München' },
+  { name: 'Thomas Müller', team: 'GER', flag: '🇩🇪', info: 'Bayern München' },
+  { name: 'Niclas Füllkrug', team: 'GER', flag: '🇩🇪', info: 'West Ham' },
+  { name: 'Serge Gnabry', team: 'GER', flag: '🇩🇪', info: 'Bayern München' },
+  // Nederland (F)
+  { name: 'Virgil van Dijk', team: 'NED', flag: '🇳🇱', info: 'Liverpool' },
+  { name: 'Memphis Depay', team: 'NED', flag: '🇳🇱', info: 'Corinthians' },
+  { name: 'Cody Gakpo', team: 'NED', flag: '🇳🇱', info: 'Liverpool' },
+  { name: 'Xavi Simons', team: 'NED', flag: '🇳🇱', info: 'RB Leipzig' },
+  { name: 'Donyell Malen', team: 'NED', flag: '🇳🇱', info: 'Dortmund' },
+  { name: 'Wout Weghorst', team: 'NED', flag: '🇳🇱', info: 'Hoffenheim' },
+  // Belgia (G)
+  { name: 'Kevin De Bruyne', team: 'BEL', flag: '🇧🇪', info: 'Manchester City' },
+  { name: 'Romelu Lukaku', team: 'BEL', flag: '🇧🇪', info: 'Napoli' },
+  { name: 'Dries Mertens', team: 'BEL', flag: '🇧🇪', info: 'Galatasaray' },
+  { name: 'Leandro Trossard', team: 'BEL', flag: '🇧🇪', info: 'Arsenal' },
+  { name: 'Yannick Carrasco', team: 'BEL', flag: '🇧🇪', info: 'Al-Qadsiah' },
+  { name: 'Lois Openda', team: 'BEL', flag: '🇧🇪', info: 'RB Leipzig' },
+  // USA (D)
+  { name: 'Christian Pulisic', team: 'USA', flag: '🇺🇸', info: 'AC Milan' },
+  { name: 'Gio Reyna', team: 'USA', flag: '🇺🇸', info: 'Nottingham Forest' },
+  { name: 'Ricardo Pepi', team: 'USA', flag: '🇺🇸', info: 'PSV Eindhoven' },
+  { name: 'Weston McKennie', team: 'USA', flag: '🇺🇸', info: 'Juventus' },
+  { name: 'Folarin Balogun', team: 'USA', flag: '🇺🇸', info: 'Monaco' },
+  { name: 'Timothy Weah', team: 'USA', flag: '🇺🇸', info: 'Juventus' },
+  // Mexico (A)
+  { name: 'Hirving Lozano', team: 'MEX', flag: '🇲🇽', info: 'PSV Eindhoven' },
+  { name: 'Raúl Jiménez', team: 'MEX', flag: '🇲🇽', info: 'Fulham' },
+  { name: 'Henry Martín', team: 'MEX', flag: '🇲🇽', info: 'Club América' },
+  { name: 'Edson Álvarez', team: 'MEX', flag: '🇲🇽', info: 'West Ham' },
+  // Japan (F)
+  { name: 'Takumi Minamino', team: 'JPN', flag: '🇯🇵', info: 'AS Monaco' },
+  { name: 'Kaoru Mitoma', team: 'JPN', flag: '🇯🇵', info: 'Brighton' },
+  { name: 'Daichi Kamada', team: 'JPN', flag: '🇯🇵', info: 'Crystal Palace' },
+  { name: 'Ritsu Doan', team: 'JPN', flag: '🇯🇵', info: 'SC Freiburg' },
+  { name: 'Ayase Ueda', team: 'JPN', flag: '🇯🇵', info: 'Feyenoord' },
+  // Marokko (C)
+  { name: 'Hakim Ziyech', team: 'MAR', flag: '🇲🇦', info: 'Galatasaray' },
+  { name: 'Achraf Hakimi', team: 'MAR', flag: '🇲🇦', info: 'Paris Saint-Germain' },
+  { name: 'Youssef En-Nesyri', team: 'MAR', flag: '🇲🇦', info: 'Fenerbahçe' },
+  { name: 'Sofiane Boufal', team: 'MAR', flag: '🇲🇦', info: 'Angers' },
+  // Senegal (I)
+  { name: 'Sadio Mané', team: 'SEN', flag: '🇸🇳', info: 'Al Nassr' },
+  { name: 'Ismaïla Sarr', team: 'SEN', flag: '🇸🇳', info: 'Crystal Palace' },
+  { name: 'Iliman Ndiaye', team: 'SEN', flag: '🇸🇳', info: 'Everton' },
+  // Uruguay (H)
+  { name: 'Darwin Núñez', team: 'URU', flag: '🇺🇾', info: 'Liverpool' },
+  { name: 'Federico Valverde', team: 'URU', flag: '🇺🇾', info: 'Real Madrid' },
+  { name: 'Luis Suárez', team: 'URU', flag: '🇺🇾', info: 'Internacional' },
+  { name: 'Facundo Pellistri', team: 'URU', flag: '🇺🇾', info: 'Manchester United' },
+  // Colombia (K)
+  { name: 'Luis Díaz', team: 'COL', flag: '🇨🇴', info: 'Liverpool' },
+  { name: 'James Rodríguez', team: 'COL', flag: '🇨🇴', info: 'Rayo Vallecano' },
+  { name: 'Jhon Durán', team: 'COL', flag: '🇨🇴', info: 'Aston Villa' },
+  { name: 'Cucho Hernández', team: 'COL', flag: '🇨🇴', info: 'Columbus Crew' },
+  // Ecuador (E)
+  { name: 'Moisés Caicedo', team: 'ECU', flag: '🇪🇨', info: 'Chelsea' },
+  { name: 'Enner Valencia', team: 'ECU', flag: '🇪🇨', info: 'Internacional' },
+  { name: 'Jeremy Sarmiento', team: 'ECU', flag: '🇪🇨', info: 'Brighton' },
+  // Australia (D)
+  { name: 'Mat Ryan', team: 'AUS', flag: '🇦🇺', info: 'Real Sociedad' },
+  { name: 'Mitchell Duke', team: 'AUS', flag: '🇦🇺', info: 'Macarthur FC' },
+  { name: 'Martin Boyle', team: 'AUS', flag: '🇦🇺', info: 'Panathinaikos' },
+  // Kroatia (L)
+  { name: 'Luka Modrić', team: 'CRO', flag: '🇭🇷', info: 'Real Madrid' },
+  { name: 'Ivan Perišić', team: 'CRO', flag: '🇭🇷', info: 'Hajduk Split' },
+  { name: 'Ante Budimir', team: 'CRO', flag: '🇭🇷', info: 'Osasuna' },
+  { name: 'Mateo Kovačić', team: 'CRO', flag: '🇭🇷', info: 'Manchester City' },
+  // Sveits (B)
+  { name: 'Granit Xhaka', team: 'SUI', flag: '🇨🇭', info: 'Bayer Leverkusen' },
+  { name: 'Xherdan Shaqiri', team: 'SUI', flag: '🇨🇭', info: 'Chicago Fire' },
+  { name: 'Breel Embolo', team: 'SUI', flag: '🇨🇭', info: 'Monaco' },
+  { name: 'Ruben Vargas', team: 'SUI', flag: '🇨🇭', info: 'Augsburg' },
+  // Tyrkia (D)
+  { name: 'Hakan Çalhanoğlu', team: 'TUR', flag: '🇹🇷', info: 'Inter' },
+  { name: 'Arda Güler', team: 'TUR', flag: '🇹🇷', info: 'Real Madrid' },
+  { name: 'Kerem Aktürkoğlu', team: 'TUR', flag: '🇹🇷', info: 'Galatasaray' },
+  { name: 'Cenk Tosun', team: 'TUR', flag: '🇹🇷', info: 'Beşiktaş' },
+  // Canada (B)
+  { name: 'Alphonso Davies', team: 'CAN', flag: '🇨🇦', info: 'Bayern München' },
+  { name: 'Jonathan David', team: 'CAN', flag: '🇨🇦', info: 'Lille' },
+  { name: 'Cyle Larin', team: 'CAN', flag: '🇨🇦', info: 'Club Brugge' },
+  { name: 'Tajon Buchanan', team: 'CAN', flag: '🇨🇦', info: 'Inter' },
+  // Sør-Korea (A)
+  { name: 'Son Heung-min', team: 'KOR', flag: '🇰🇷', info: 'Tottenham' },
+  { name: 'Lee Kang-in', team: 'KOR', flag: '🇰🇷', info: 'Paris Saint-Germain' },
+  { name: 'Hwang Hee-chan', team: 'KOR', flag: '🇰🇷', info: 'Wolverhampton' },
+  // Ghana (L)
+  { name: 'Jordan Ayew', team: 'GHA', flag: '🇬🇭', info: 'Leicester City' },
+  { name: 'André Ayew', team: 'GHA', flag: '🇬🇭', info: 'Le Havre' },
+  { name: 'Mohammed Kudus', team: 'GHA', flag: '🇬🇭', info: 'West Ham' },
+  // Østerrike (J)
+  { name: 'Marcel Sabitzer', team: 'AUT', flag: '🇦🇹', info: 'Dortmund' },
+  { name: 'Marko Arnautović', team: 'AUT', flag: '🇦🇹', info: 'Inter' },
+  { name: 'David Alaba', team: 'AUT', flag: '🇦🇹', info: 'Real Madrid' },
+  // Sverige (F)
+  { name: 'Viktor Gyökeres', team: 'SWE', flag: '🇸🇪', info: 'Sporting CP' },
+  { name: 'Alexander Isak', team: 'SWE', flag: '🇸🇪', info: 'Newcastle' },
+  { name: 'Dejan Kulusevski', team: 'SWE', flag: '🇸🇪', info: 'Tottenham' },
+  { name: 'Emil Forsberg', team: 'SWE', flag: '🇸🇪', info: 'RB Leipzig' },
+  // Saudi-Arabia (H)
+  { name: 'Salem Al-Dawsari', team: 'KSA', flag: '🇸🇦', info: 'Al-Hilal' },
+  { name: 'Mohammed Al-Owais', team: 'KSA', flag: '🇸🇦', info: 'Al-Hilal' },
+  // Egypt (G)
+  { name: 'Mohamed Salah', team: 'EGY', flag: '🇪🇬', info: 'Liverpool' },
+  { name: 'Trezeguet', team: 'EGY', flag: '🇪🇬', info: 'Trabzonspor' },
+  // Iran (G)
+  { name: 'Mehdi Taremi', team: 'IRN', flag: '🇮🇷', info: 'Inter' },
+  { name: 'Sardar Azmoun', team: 'IRN', flag: '🇮🇷', info: 'Roma' },
+  // Skottland (C)
+  { name: 'Scott McTominay', team: 'SCO', flag: '🏴󠁧󠁢󠁳󠁣󠁴󠁿', info: 'Napoli' },
+  { name: 'Andy Robertson', team: 'SCO', flag: '🏴󠁧󠁢󠁳󠁣󠁴󠁿', info: 'Liverpool' },
+  { name: 'Che Adams', team: 'SCO', flag: '🏴󠁧󠁢󠁳󠁣󠁴󠁿', info: 'Torino' },
+];
+
+// Fuzzy search: score a player against a query
+function fuzzyScore(player, query) {
+  const q = query.toLowerCase().trim();
+  const n = player.name.toLowerCase();
+  const parts = n.split(' ');
+  if (n.startsWith(q)) return 100;
+  if (parts.some(p => p.startsWith(q))) return 90;
+  if (n.includes(q)) return 80;
+  // Check each word of query against name
+  const words = q.split(' ').filter(Boolean);
+  if (words.length > 1 && words.every(w => n.includes(w))) return 70;
+  // Partial match on any part
+  if (parts.some(p => p.includes(q))) return 60;
+  // Check first letters of each word
+  const initials = parts.map(p=>p[0]).join('');
+  if (initials.includes(q)) return 40;
+  return 0;
+}
+
+function searchPlayers(query) {
+  if (!query || query.trim().length < 1) return [];
+  const scored = PLAYERS.map(p => ({ ...p, score: fuzzyScore(p, query) }))
+    .filter(p => p.score > 0)
+    .sort((a,b) => b.score - a.score);
+  return scored.slice(0, 7);
+}
+
+// ── PlayerAutocomplete ────────────────────────────────────────────────────────
+function PlayerAutocomplete({ value, onChange, placeholder, id }) {
+  const [open, setOpen] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const suggestions = searchPlayers(value);
+  const wrapRef = useRef(null);
+
+  useEffect(() => {
+    function handle(e) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false);
+    }
+    document.addEventListener('mousedown', handle);
+    return () => document.removeEventListener('mousedown', handle);
+  }, []);
+
+  const showDropdown = open && value.trim().length >= 1;
+
+  return (
+    <div ref={wrapRef} style={{position:'relative'}}>
+      <input
+        id={id}
+        className="award-input"
+        value={value}
+        placeholder={placeholder}
+        autoComplete="off"
+        onFocus={() => { setFocused(true); setOpen(true); }}
+        onBlur={() => setFocused(false)}
+        onChange={e => { onChange(e.target.value); setOpen(true); }}
+      />
+      {showDropdown && (
+        <div style={{
+          position:'absolute',top:'calc(100% + 6px)',left:0,right:0,
+          background:'var(--elevated)',border:'1px solid rgba(0,217,106,.25)',
+          borderRadius:10,zIndex:50,overflow:'hidden',
+          boxShadow:'0 8px 32px rgba(0,0,0,.5)'
+        }}>
+          {suggestions.length === 0 && (
+            <div style={{padding:'12px 16px',fontSize:13,color:'var(--txt3)',fontStyle:'italic'}}>
+              Ingen forslag – men du kan skrive fritt ✍️
+            </div>
+          )}
+          {suggestions.map((p, i) => (
+            <div key={i}
+              onMouseDown={e => { e.preventDefault(); onChange(p.name); setOpen(false); }}
+              style={{
+                display:'flex',alignItems:'center',gap:12,padding:'11px 16px',
+                cursor:'pointer',borderTop: i > 0 ? '1px solid rgba(255,255,255,.05)' : 'none',
+                transition:'background .1s',
+              }}
+              onMouseEnter={e=>e.currentTarget.style.background='rgba(0,217,106,.1)'}
+              onMouseLeave={e=>e.currentTarget.style.background='transparent'}
+            >
+              <span style={{fontSize:20}}>{TEAMS[p.team]?.flag || p.flag}</span>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontWeight:700,fontSize:14,color:'var(--txt)'}}>{p.name}</div>
+                <div style={{fontSize:11,color:'var(--txt2)'}}>{TEAMS[p.team]?.name} · {p.info}</div>
+              </div>
+              {p.score >= 90 && <span style={{fontSize:10,color:'var(--accent)',fontWeight:700,background:'var(--accent2)',padding:'2px 6px',borderRadius:4}}>TOPP</span>}
+            </div>
+          ))}
+          {value.trim() && !PLAYERS.some(p => p.name.toLowerCase() === value.trim().toLowerCase()) && (
+            <div style={{padding:'9px 16px',borderTop:'1px solid rgba(255,255,255,.05)',fontSize:12,color:'var(--txt3)',display:'flex',alignItems:'center',gap:6}}>
+              <span>✍️</span>
+              <span>Bruk «<span style={{color:'var(--txt)',fontWeight:600}}>{value.trim()}</span>» som eget svar</span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Step 5: Awards ───────────────────────────────────────────────────────────
+function AwardsStep({ topScorer, setTopScorer, topAssist, setTopAssist, onNext, onBack }) {
+  return (
+    <div>
+      <div className="card">
+        <div className="section-title">Individuelle utmerkelser</div>
+        <div className="section-sub">Hvem tror du stikker av med toppscorer og flest assist? Begynn å skrive for forslag.</div>
+
+        <div className="award-card">
+          <span className="award-icon">⚽</span>
+          <div className="award-body">
+            <div className="award-label">Toppscorer</div>
+            <div className="award-desc">Spilleren med flest mål i VM 2026</div>
+            <div className="award-pts">+2 poeng</div>
+            <PlayerAutocomplete
+              id="scorer"
+              value={topScorer}
+              onChange={setTopScorer}
+              placeholder="F.eks. Erling Haaland…"
+            />
+          </div>
+        </div>
+
+        <div className="award-card">
+          <span className="award-icon">🎯</span>
+          <div className="award-body">
+            <div className="award-label">Flest assist</div>
+            <div className="award-desc">Spilleren med flest assist i VM 2026</div>
+            <div className="award-pts">+2 poeng</div>
+            <PlayerAutocomplete
+              id="assist"
+              value={topAssist}
+              onChange={setTopAssist}
+              placeholder="F.eks. Kevin De Bruyne…"
+            />
+          </div>
+        </div>
+      </div>
+      <div className="btn-row">
+        <button className="btn btn-ghost" onClick={onBack}>← Tilbake</button>
+        <button className="btn btn-primary"
+          disabled={!topScorer.trim()||!topAssist.trim()}
+          onClick={onNext}>Se oppsummering →</button>
+      </div>
+    </div>
+  );
+}
+
+// ── Step 6: Review & Submit ──────────────────────────────────────────────────
+function ReviewStep({ user, groupScores, thirdPlace, picks, topScorer, topAssist, onBack, onSubmit, submitting }) {
+  const standings = getGroupAllStandings(groupScores);
+
+  const champion = picks['FINAL'];
+  const bronze   = picks['BRONZE'];
+
+  return (
+    <div>
+      <div className="card">
+        <div className="section-title">Oppsummering</div>
+        <div className="section-sub">Sjekk tippingen din før du leverer.</div>
+
+        <div className="review-section">
+          <h3>👤 Deltaker</h3>
+          <div className="review-row"><span className="review-key">Navn</span><span className="review-val">{user.name}</span></div>
+          <div className="review-row"><span className="review-key">E-post</span><span className="review-val">{user.email}</span></div>
+        </div>
+
+        <hr className="divider"/>
+        <div className="review-section">
+          <h3>🏆 Sluttresultat</h3>
+          <div className="review-row"><span className="review-key">VM-vinner</span><span className="review-val">{champion ? fmt(champion) : '–'}</span></div>
+          <div className="review-row"><span className="review-key">Bronse</span><span className="review-val">{bronze ? fmt(bronze) : '–'}</span></div>
+          <div className="review-row"><span className="review-key">Toppscorer</span><span className="review-val">{topScorer || '–'}</span></div>
+          <div className="review-row"><span className="review-key">Topp-assist</span><span className="review-val">{topAssist || '–'}</span></div>
+        </div>
+
+        <hr className="divider"/>
+        <div className="review-section">
+          <h3>🗂 Gruppetabell (dine prediksjoner)</h3>
+          <div className="review-group-grid">
+            {Object.keys(GROUPS).map(g => {
+              const rows = standings[g];
+              return (
+                <div key={g} className="review-group">
+                  <div className="review-group-head">Gruppe {g}</div>
+                  {rows.map((r,i) => (
+                    <div key={r.team} style={{display:'flex',gap:6,alignItems:'center',padding:'3px 0',fontSize:12}}>
+                      <span style={{color:'var(--txt3)',width:14}}>{i+1}.</span>
+                      <span>{TEAMS[r.team]?.flag}</span>
+                      <span style={{color: i<2?'var(--txt)':'var(--txt2)'}}>{TEAMS[r.team]?.name}</span>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <hr className="divider"/>
+        <div style={{background:'var(--accent2)',border:'1px solid rgba(0,217,106,.2)',borderRadius:10,padding:16,fontSize:14,color:'var(--txt2)'}}>
+          ✅ Du er klar til å levere. Tippingen lagres og du kan se tabellen på <a href="leaderboard.html" style={{color:'var(--accent)'}}>resultatsiden</a> når VM starter.
+        </div>
+      </div>
+
+      <div className="btn-row">
+        <button className="btn btn-ghost" onClick={onBack}>← Tilbake</button>
+        <button className="btn btn-primary" onClick={onSubmit} disabled={submitting}>
+          {submitting ? '⏳ Sender…' : '🏆 Lever tipping!'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Success ──────────────────────────────────────────────────────────────────
+function SuccessView({ user }) {
+  return (
+    <div className="success-wrap">
+      <div className="success-icon">🎉</div>
+      <div className="success-title">Tipping levert!</div>
+      <div className="success-sub">Takk {user.name}! Vi sees på leaderboard når VM starter 11. juni.</div>
+      <a href="leaderboard.html" className="btn btn-primary">Se resultattabell →</a>
+    </div>
+  );
+}
+
+// ── Main App ─────────────────────────────────────────────────────────────────
+function App() {
+  const [step, setStep] = useState(0);
+  // 0=register, 1=groups, 2=thirdplace, 3=knockout, 4=awards, 5=review, 6=done
+
+  const [user,       setUser]       = useState(() => lsGet(LS_USER) || null);
+  const [groupScores,setGroupScores]= useState(() => {
+    const saved = lsGet(LS_TIP)?.groupScores;
+    if (saved && Object.keys(saved).length > 0) return saved;
+    const defaults = {};
+    ALL_GAMES.forEach(game => { defaults[game.id] = { home: 0, away: 0 }; });
+    return defaults;
+  });
+  const [thirdPlace, setThirdPlace] = useState(() => lsGet(LS_TIP)?.thirdPlace || []);
+  const [picks,      setPicks]      = useState(() => lsGet(LS_TIP)?.knockoutPicks || {});
+  const [topScorer,  setTopScorer]  = useState(() => lsGet(LS_TIP)?.topScorer || '');
+  const [topAssist,  setTopAssist]  = useState(() => lsGet(LS_TIP)?.topAssist || '');
+  const [submitted,  setSubmitted]  = useState(() => lsGet(LS_TIP)?.submitted || false);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Restore step if user already registered
+  useEffect(() => {
+    if (submitted) { setStep(6); return; }
+    if (user) setStep(s => Math.max(s, 1));
+  }, []);
+
+  // Persist state
+  useEffect(() => {
+    if (user) lsSet(LS_USER, user);
+  }, [user]);
+
+  useEffect(() => {
+    lsSet(LS_TIP, { groupScores, thirdPlace, knockoutPicks: picks, topScorer, topAssist, submitted });
+  }, [groupScores, thirdPlace, picks, topScorer, topAssist, submitted]);
+
+  const deadline = TIPPING_DEADLINE;
+  const pastDeadline = new Date() > deadline;
+
+  async function handleSubmit() {
+    setSubmitting(true);
+    const tipping = { user, groupScores, thirdPlace, knockoutPicks: picks, topScorer, topAssist, submittedAt: new Date().toISOString() };
+    // Save to shared localStorage list so admin can see it (fallback when no Google Sheets)
+    const existing = lsGet('vm26_submitted_tippings') || [];
+    const updated = existing.filter(t => t.user?.email !== user.email);
+    updated.push(tipping);
+    lsSet('vm26_submitted_tippings', updated);
+    await postToSheets({ action: 'submitTipping', data: tipping });
+    lsSet(LS_TIP, { ...lsGet(LS_TIP), submitted: true });
+    setSubmitted(true);
+    setStep(6);
+    setSubmitting(false);
+  }
+
+  const totalSteps = 6;
+  const progressStep = step;
+
+  return (
+    <div className="shell">
+      <div className="topbar">
+        <img src="assets/consort_logo.png" alt="Consort"/>
+        <div className="topbar-title">VM 2026 Tipping</div>
+        <div className="topbar-sub">
+          <a href="leaderboard.html">📊 Resultattabell</a>
+        </div>
+      </div>
+      <div className="main">
+        {step > 0 && step < 6 && (
+          <div className="progress">
+            {Array.from({length:totalSteps},(_,i)=>(
+              <div key={i} className={`progress-step ${i<progressStep?'done':i===progressStep?'active':''}`}/>
+            ))}
+          </div>
+        )}
+
+        {step === 0 && <RegistrationStep onDone={u=>{setUser(u);setStep(1);}}/>}
+        {step === 1 && <GroupStep groupScores={groupScores} setGroupScores={setGroupScores} onNext={()=>setStep(2)} onBack={()=>setStep(0)}/>}
+        {step === 2 && <ThirdPlaceStep groupScores={groupScores} thirdPlace={thirdPlace} setThirdPlace={setThirdPlace} onNext={()=>setStep(3)} onBack={()=>setStep(1)}/>}
+        {step === 3 && <KnockoutStep groupScores={groupScores} thirdPlace={thirdPlace} picks={picks} setPicks={setPicks} onNext={()=>setStep(4)} onBack={()=>setStep(2)}/>}
+        {step === 4 && <AwardsStep topScorer={topScorer} setTopScorer={setTopScorer} topAssist={topAssist} setTopAssist={setTopAssist} onNext={()=>setStep(5)} onBack={()=>setStep(3)}/>}
+        {step === 5 && <ReviewStep user={user} groupScores={groupScores} thirdPlace={thirdPlace} picks={picks} topScorer={topScorer} topAssist={topAssist} onBack={()=>setStep(4)} onSubmit={handleSubmit} submitting={submitting}/>}
+        {step === 6 && <SuccessView user={user||{name:''}}/>}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>

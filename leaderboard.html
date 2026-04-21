@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resultattabell – VM 2026 Tipping</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800;900&family=Barlow+Condensed:wght@600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="data.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#070d18;--surface:#0d1826;--card:#122030;--elevated:#19304a;
+  --accent:#00d96a;--accent2:rgba(0,217,106,.1);--glow:0 0 30px rgba(0,217,106,.2);
+  --txt:#e8f0fa;--txt2:#7a9cc0;--txt3:#3d5670;
+  --border:rgba(255,255,255,.07);--gold:#ffd700;--silver:#bcc8d8;--bronze:#cd7f32;--r:12px;
+}
+html,body{min-height:100%;background:var(--bg);color:var(--txt);font-family:'Barlow',sans-serif;font-size:15px;line-height:1.5;}
+body{background-image:repeating-linear-gradient(0deg,transparent,transparent 59px,rgba(255,255,255,.015) 59px,rgba(255,255,255,.015) 60px),repeating-linear-gradient(90deg,transparent,transparent 59px,rgba(255,255,255,.015) 59px,rgba(255,255,255,.015) 60px);}
+
+.shell{min-height:100vh;display:flex;flex-direction:column;}
+.topbar{display:flex;align-items:center;gap:12px;padding:16px 24px;border-bottom:1px solid var(--border);background:rgba(7,13,24,.9);backdrop-filter:blur(10px);position:sticky;top:0;z-index:100;}
+.topbar img{height:34px;width:34px;object-fit:contain;}
+.topbar-title{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:800;letter-spacing:.04em;color:var(--accent);text-transform:uppercase;}
+.topbar-right{margin-left:auto;display:flex;gap:10px;align-items:center;}
+.topbar a{color:var(--txt2);font-size:13px;text-decoration:none;padding:6px 12px;border:1px solid var(--border);border-radius:6px;transition:all .2s;}
+.topbar a:hover{border-color:var(--accent);color:var(--accent);}
+.live-dot{width:8px;height:8px;background:var(--red,#ff4f5e);border-radius:50%;box-shadow:0 0 6px var(--red,#ff4f5e);animation:pulse 1.4s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.main{flex:1;max-width:980px;width:100%;margin:0 auto;padding:28px 20px 80px;}
+
+/* Hero */
+.hero{text-align:center;padding:32px 0 40px;position:relative;}
+.hero-title{font-family:'Barlow Condensed',sans-serif;font-size:52px;font-weight:900;text-transform:uppercase;letter-spacing:.04em;line-height:.95;margin-bottom:8px;}
+.hero-title span{color:var(--accent);}
+.hero-sub{color:var(--txt2);font-size:16px;}
+.hero-before{background:rgba(0,217,106,.06);border:1px solid rgba(0,217,106,.2);border-radius:10px;padding:14px 20px;display:inline-flex;align-items:center;gap:10px;font-size:14px;margin-top:20px;color:var(--txt2);}
+.hero-before strong{color:var(--accent);}
+
+/* Podium */
+.podium-wrap{display:flex;justify-content:center;align-items:flex-end;gap:16px;margin-bottom:36px;}
+.podium-place{display:flex;flex-direction:column;align-items:center;gap:8px;}
+.podium-avatar{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;font-family:'Barlow Condensed',sans-serif;}
+.podium-avatar.gold{background:linear-gradient(135deg,#ffd700,#ffb300);color:#000;box-shadow:0 0 20px rgba(255,215,0,.4);}
+.podium-avatar.silver{background:linear-gradient(135deg,#bcc8d8,#8898aa);color:#000;}
+.podium-avatar.bronze{background:linear-gradient(135deg,#cd7f32,#a05c1a);color:#fff;}
+.podium-name{font-size:14px;font-weight:700;color:var(--txt);}
+.podium-pts{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;color:var(--accent);}
+.podium-rank-label{font-size:11px;font-weight:700;color:var(--txt3);letter-spacing:.06em;text-transform:uppercase;}
+.podium-bar{border-radius:6px 6px 0 0;width:72px;}
+.podium-bar.p1{height:80px;background:linear-gradient(to top,rgba(255,215,0,.3),rgba(255,215,0,.05));}
+.podium-bar.p2{height:56px;background:linear-gradient(to top,rgba(188,200,216,.2),transparent);}
+.podium-bar.p3{height:40px;background:linear-gradient(to top,rgba(205,127,50,.2),transparent);}
+
+/* Tabs */
+.tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:28px;}
+.tab{padding:10px 20px;font-size:14px;font-weight:700;color:var(--txt2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s;}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab:hover:not(.active){color:var(--txt);}
+
+/* Leaderboard table */
+.lb-table{width:100%;border-collapse:collapse;}
+.lb-table th{padding:10px 14px;font-size:11px;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);}
+.lb-table th:first-child{text-align:center;width:50px;}
+.lb-table th:not(:first-child){text-align:left;}
+.lb-table .pts-col{text-align:right!important;}
+.lb-table td{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.04);}
+.lb-table td:first-child{text-align:center;}
+.lb-row{transition:background .15s;cursor:pointer;}
+.lb-row:hover td{background:rgba(255,255,255,.02);}
+.lb-row.highlighted td{background:var(--accent2);}
+.lb-row.highlighted .rank-num{color:var(--accent);}
+.rank-num{font-weight:800;font-size:13px;color:var(--txt3);}
+.rank-num.r1{color:var(--gold);font-size:15px;}
+.rank-num.r2{color:var(--silver);}
+.rank-num.r3{color:var(--bronze);}
+.user-name{font-weight:700;font-size:15px;}
+.user-email{font-size:12px;color:var(--txt3);}
+.pts-badge{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;color:var(--accent);text-align:right;}
+.champion-pick{display:inline-flex;align-items:center;gap:4px;background:rgba(255,215,0,.1);border:1px solid rgba(255,215,0,.2);color:var(--gold);border-radius:5px;padding:2px 8px;font-size:12px;font-weight:600;}
+.scorer-pick{font-size:12px;color:var(--txt2);}
+.no-data{text-align:center;padding:60px 20px;color:var(--txt3);}
+.no-data .icon{font-size:40px;margin-bottom:12px;}
+
+/* Detail modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:var(--r);width:100%;max-width:560px;max-height:85vh;overflow-y:auto;}
+.modal-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--card);z-index:1;}
+.modal-title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;text-transform:uppercase;}
+.modal-close{background:none;border:none;color:var(--txt2);font-size:22px;cursor:pointer;padding:4px;}
+.modal-body{padding:20px 24px;}
+.detail-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-top:1px solid var(--border);font-size:13px;}
+.detail-row:first-child{border-top:none;}
+.detail-key{color:var(--txt2);}
+.detail-val{font-weight:600;color:var(--txt);text-align:right;}
+.detail-pts{color:var(--accent);font-weight:800;font-size:11px;background:var(--accent2);padding:1px 6px;border-radius:4px;margin-left:6px;}
+.section-head{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--txt3);margin:16px 0 6px;}
+.total-pts{font-family:'Barlow Condensed',sans-serif;font-size:30px;font-weight:900;color:var(--accent);text-align:center;padding:14px 0 0;}
+
+/* Stats strip */
+.stats-strip{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;margin-bottom:28px;}
+.stat-box{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center;}
+.stat-n{font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:900;color:var(--accent);}
+.stat-l{font-size:11px;color:var(--txt2);margin-top:2px;}
+
+/* refresh */
+.refresh-btn{background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--txt2);padding:6px 12px;font-size:12px;cursor:pointer;font-family:'Barlow',sans-serif;display:inline-flex;align-items:center;gap:6px;transition:all .2s;}
+.refresh-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+@media(max-width:600px){
+  .hero-title{font-size:36px;}
+  .podium-wrap{gap:10px;}
+  .lb-table th:nth-child(4),.lb-table td:nth-child(4){display:none;}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect,useRef} = React;
+
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwbU11hf5fhPljI22ynXMrzj86yAKVbWc5hficPmvQQlg2t_Vyo5-XeSqUL3Ojleewz/exec';
+const VM_START = new Date('2026-06-11T00:00:00');
+const NOW = new Date();
+
+function lsGet(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }
+const fmt = t => TEAMS[t] ? `${TEAMS[t].flag} ${TEAMS[t].name}` : (t||'–');
+
+async function fetchAllData() {
+  if (APPS_SCRIPT_URL) {
+    try {
+      const res = await fetch(`${APPS_SCRIPT_URL}?action=getAllData`);
+      return await res.json();
+    } catch {}
+  }
+  // Fallback: local storage data
+  const tippings = lsGet('vm26_submitted_tippings') || [];
+  const results  = lsGet('vm26_admin_results') || null;
+  return { tippings, results };
+}
+
+// ── Score breakdown ──────────────────────────────────────────────────────────
+function scoreBreakdown(tipping, adminResults) {
+  const detail = { groupOutcomes:0, groupPositions:0, knockout:{}, finalists:0, bronze:0, champion:0, scorer:0, assist:0 };
+  if (!adminResults) return detail;
+
+  ALL_GAMES.forEach(game => {
+    const u = tipping.groupScores?.[game.id], r = adminResults.groupScores?.[game.id];
+    if (!u||!r) return;
+    const uh=parseInt(u.home),ua=parseInt(u.away),rh=parseInt(r.home),ra=parseInt(r.away);
+    if(isNaN(uh)||isNaN(ua)||isNaN(rh)||isNaN(ra)) return;
+    const uR=uh>ua?'H':uh<ua?'A':'D', rR=rh>ra?'H':rh<ra?'A':'D';
+    if(uR===rR) detail.groupOutcomes++;
+  });
+
+  Object.keys(GROUPS).forEach(g => {
+    const uS = calcStandings(g, tipping.groupScores||{}), rS = calcStandings(g, adminResults.groupScores||{});
+    uS.forEach((entry,i)=>{ if(rS[i]?.team===entry.team) detail.groupPositions++; });
+  });
+
+  ['R32','R16','QF','SF'].forEach(rk => {
+    const matches = {R32,R16,QF,SF}[rk];
+    let pts = 0;
+    matches.forEach(m => {
+      const uP=tipping.knockoutPicks?.[m.id], rP=adminResults.knockoutResults?.[m.id];
+      if(uP&&rP&&uP===rP) pts+=2;
+    });
+    detail.knockout[rk] = pts;
+  });
+
+  const uF1=tipping.knockoutPicks?.['SF_1'],uF2=tipping.knockoutPicks?.['SF_2'];
+  const rF1=adminResults.knockoutResults?.['SF_1'],rF2=adminResults.knockoutResults?.['SF_2'];
+  const realFin=[rF1,rF2].filter(Boolean);
+  [uF1,uF2].forEach(t=>{if(t&&realFin.includes(t))detail.finalists++;});
+
+  if(tipping.knockoutPicks?.['BRONZE']&&tipping.knockoutPicks['BRONZE']===adminResults.knockoutResults?.['BRONZE']) detail.bronze=1;
+  if(tipping.knockoutPicks?.['FINAL']&&tipping.knockoutPicks['FINAL']===adminResults.knockoutResults?.['FINAL']) detail.champion=2;
+  if(tipping.topScorer&&adminResults.topScorer&&tipping.topScorer.trim().toLowerCase()===adminResults.topScorer.trim().toLowerCase()) detail.scorer=2;
+  if(tipping.topAssist&&adminResults.topAssist&&tipping.topAssist.trim().toLowerCase()===adminResults.topAssist.trim().toLowerCase()) detail.assist=2;
+
+  return detail;
+}
+
+// ── Detail Modal ─────────────────────────────────────────────────────────────
+function DetailModal({entry, adminResults, onClose}) {
+  const {tipping, name, email} = entry;
+  const bd = scoreBreakdown(tipping, adminResults);
+  const total = calcScore(tipping, adminResults);
+
+  const roundLabels = {R32:'Runde av 32',R16:'Runde av 16',QF:'Kvartfinale',SF:'Semifinale'};
+
+  return (
+    <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="modal">
+        <div className="modal-header">
+          <div className="modal-title">{name}</div>
+          <button className="modal-close" onClick={onClose}>✕</button>
+        </div>
+        <div className="modal-body">
+          <div className="total-pts">{total} poeng</div>
+          <div style={{textAlign:'center',color:'var(--txt2)',fontSize:13,marginBottom:16}}>{email}</div>
+
+          <div className="section-head">Gruppespill</div>
+          <div className="detail-row">
+            <span className="detail-key">Riktig utfall (kampresultat)</span>
+            <span className="detail-val">{bd.groupOutcomes}/72 <span className="detail-pts">+{bd.groupOutcomes} p</span></span>
+          </div>
+          <div className="detail-row">
+            <span className="detail-key">Riktig plass i gruppe</span>
+            <span className="detail-val">{bd.groupPositions}/48 <span className="detail-pts">+{bd.groupPositions} p</span></span>
+          </div>
+
+          <div className="section-head">Sluttspill</div>
+          {Object.entries(bd.knockout).map(([rk,pts])=>(
+            <div key={rk} className="detail-row">
+              <span className="detail-key">{roundLabels[rk]}</span>
+              <span className="detail-val"><span className="detail-pts">+{pts} p</span></span>
+            </div>
+          ))}
+          <div className="detail-row">
+            <span className="detail-key">Riktig finalist (×2)</span>
+            <span className="detail-val">{bd.finalists}/2 <span className="detail-pts">+{bd.finalists} p</span></span>
+          </div>
+          <div className="detail-row">
+            <span className="detail-key">Bronsevinner</span>
+            <span className="detail-val">{fmt(tipping.knockoutPicks?.['BRONZE'])} <span className="detail-pts">+{bd.bronze} p</span></span>
+          </div>
+          <div className="detail-row">
+            <span className="detail-key">VM-vinner</span>
+            <span className="detail-val">{fmt(tipping.knockoutPicks?.['FINAL'])} <span className="detail-pts">+{bd.champion} p</span></span>
+          </div>
+
+          <div className="section-head">Individuelle utmerkelser</div>
+          <div className="detail-row">
+            <span className="detail-key">Toppscorer</span>
+            <span className="detail-val">{tipping.topScorer||'–'} <span className="detail-pts">+{bd.scorer} p</span></span>
+          </div>
+          <div className="detail-row">
+            <span className="detail-key">Topp-assist</span>
+            <span className="detail-val">{tipping.topAssist||'–'} <span className="detail-pts">+{bd.assist} p</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Leaderboard table ────────────────────────────────────────────────────────
+function LeaderboardTable({entries, adminResults, currentUser}) {
+  const [selected, setSelected] = useState(null);
+  const ranked = [...entries].sort((a,b)=>b.score-a.score)
+    .map((e,i,arr)=>({...e, rank: i>0&&arr[i-1].score===e.score?arr[i-1].rank:i+1}));
+
+  function rankClass(r) {
+    if(r===1) return 'r1'; if(r===2) return 'r2'; if(r===3) return 'r3'; return '';
+  }
+  function rankEmoji(r) {
+    if(r===1) return '🥇'; if(r===2) return '🥈'; if(r===3) return '🥉'; return r;
+  }
+
+  return (
+    <div>
+      <table className="lb-table">
+        <thead><tr>
+          <th>#</th>
+          <th>Deltaker</th>
+          <th>VM-vinner tippa</th>
+          <th>Toppscorer</th>
+          <th className="pts-col">Poeng</th>
+        </tr></thead>
+        <tbody>
+          {ranked.map((e,i) => {
+            const isMe = currentUser && e.email === currentUser.email;
+            return (
+              <tr key={i} className={`lb-row ${isMe?'highlighted':''}`} onClick={()=>adminResults&&setSelected(e)}>
+                <td><span className={`rank-num ${rankClass(e.rank)}`}>{rankEmoji(e.rank)}</span></td>
+                <td>
+                  <div className="user-name">{e.name} {isMe && <span style={{color:'var(--accent)',fontSize:11}}>deg</span>}</div>
+                  <div className="user-email">{e.email}</div>
+                </td>
+                <td>{e.champion ? <span className="champion-pick">{fmt(e.champion)}</span> : <span style={{color:'var(--txt3)'}}>–</span>}</td>
+                <td><span className="scorer-pick">{e.topScorer||'–'}</span></td>
+                <td><div className="pts-badge">{e.score}</div></td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+
+      {selected && adminResults && (
+        <DetailModal entry={selected} adminResults={adminResults} onClose={()=>setSelected(null)}/>
+      )}
+    </div>
+  );
+}
+
+// ── Main Leaderboard App ─────────────────────────────────────────────────────
+function LeaderboardApp() {
+  const [data, setData]     = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [tab, setTab]       = useState('table');
+  const currentUser = lsGet('vm26_user');
+  const vmStarted = NOW >= VM_START;
+
+  async function load() {
+    setLoading(true);
+    const d = await fetchAllData();
+    setData(d);
+    setLoading(false);
+  }
+
+  useEffect(()=>{ load(); }, []);
+
+  // Build leaderboard entries
+  const entries = (data?.tippings || []).map(t => ({
+    tipping: t,
+    name: t.user?.name || '–',
+    email: t.user?.email || '',
+    score: data?.results ? calcScore(t, data.results) : 0,
+    champion: t.knockoutPicks?.['FINAL'] || null,
+    topScorer: t.topScorer || '',
+  }));
+
+  const sorted = [...entries].sort((a,b)=>b.score-a.score);
+  const top3 = sorted.slice(0,3);
+  const admin = data?.results;
+  const totalGamesPlayed = admin ? Object.values(admin.groupScores||{}).filter(s=>s.home!==''&&s.away!=='').length : 0;
+
+  const beforeStart = (
+    <div style={{textAlign:'center',padding:'60px 20px'}}>
+      <div style={{fontSize:48,marginBottom:16}}>⏳</div>
+      <div style={{fontFamily:'Barlow Condensed',fontSize:28,fontWeight:900,textTransform:'uppercase',color:'var(--accent)',marginBottom:8}}>
+        VM starter 11. juni!
+      </div>
+      <div style={{color:'var(--txt2)',fontSize:15,marginBottom:24}}>
+        Tabellen er synlig fra første spark. Tippingsfrist: <strong style={{color:'var(--txt)'}}>10. juni kl. 16:00</strong>
+      </div>
+      <a href="index.html" className="btn" style={{display:'inline-flex',alignItems:'center',gap:8,padding:'12px 24px',background:'var(--accent)',color:'#000',fontWeight:700,borderRadius:8,textDecoration:'none',fontSize:15}}>
+        ⚽ Lever din tipping →
+      </a>
+    </div>
+  );
+
+  return (
+    <div className="shell">
+      <div className="topbar">
+        <img src="assets/consort_logo.png" alt="Consort"/>
+        <div className="topbar-title">VM 2026 Tipping</div>
+        <div style={{display:'flex',alignItems:'center',gap:6,marginLeft:12}}>
+          {vmStarted && <span className="live-dot"></span>}
+          {vmStarted && <span style={{color:'var(--accent)',fontSize:12,fontWeight:700,letterSpacing:'.06em'}}>LIVE</span>}
+        </div>
+        <div className="topbar-right">
+          <button className="refresh-btn" onClick={load}>🔄 Oppdater</button>
+          <a href="index.html">⚽ Min tipping</a>
+        </div>
+      </div>
+
+      <div className="main">
+        <div className="hero">
+          <div className="hero-title">VM 2026<br/><span>Resultattabell</span></div>
+          <div className="hero-sub">Consort interne tipping · USA / Canada / Mexico</div>
+          {!vmStarted && (
+            <div className="hero-before">
+              <span>⏰</span>
+              <span>Tabellen vises når VM starter <strong>11. juni 2026</strong> · Tippingsfrist <strong>10. juni kl. 16:00</strong></span>
+            </div>
+          )}
+        </div>
+
+        {!vmStarted ? beforeStart : (
+          <>
+            {/* Stats strip */}
+            <div className="stats-strip">
+              <div className="stat-box"><div className="stat-n">{entries.length}</div><div className="stat-l">Deltakere</div></div>
+              <div className="stat-box"><div className="stat-n">{totalGamesPlayed}</div><div className="stat-l">Kamper spilt</div></div>
+              <div className="stat-box"><div className="stat-n">{sorted[0]?.score ?? 0}</div><div className="stat-l">Topppoeng</div></div>
+              {currentUser && (
+                <div className="stat-box">
+                  <div className="stat-n" style={{fontSize:22}}>{entries.find(e=>e.email===currentUser.email)?.score ?? 0}</div>
+                  <div className="stat-l">Dine poeng</div>
+                </div>
+              )}
+            </div>
+
+            {/* Podium – top 3 */}
+            {top3.length >= 3 && (
+              <div className="podium-wrap">
+                {[top3[1],top3[0],top3[2]].map((e,i) => {
+                  const rank=[2,1,3][i], cls=['silver','gold','bronze'][i], emoji=['🥈','🥇','🥉'][i];
+                  return (
+                    <div key={e.email} className="podium-place" style={{order:i===1?0:i===0?-1:1}}>
+                      <div className={`podium-avatar ${cls}`}>{e.name.charAt(0).toUpperCase()}</div>
+                      <div className="podium-name" style={{maxWidth:90,textAlign:'center',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{e.name}</div>
+                      <div className="podium-pts">{e.score} p</div>
+                      <div className={`podium-bar p${rank}`}></div>
+                      <div className="podium-rank-label">{emoji}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Tabs */}
+            <div className="tabs">
+              <div className={`tab ${tab==='table'?'active':''}`} onClick={()=>setTab('table')}>Tabell</div>
+              <div className={`tab ${tab==='groups'?'active':''}`} onClick={()=>setTab('groups')}>Grupper</div>
+              <div className={`tab ${tab==='bracket'?'active':''}`} onClick={()=>setTab('bracket')}>Sluttspill</div>
+            </div>
+
+            {loading && <div style={{color:'var(--txt2)',textAlign:'center',padding:40}}>Laster…</div>}
+
+            {!loading && tab==='table' && (
+              entries.length===0
+              ? <div className="no-data"><div className="icon">📋</div><div>Ingen tippinger levert ennå.</div></div>
+              : <LeaderboardTable entries={entries} adminResults={admin} currentUser={currentUser}/>
+            )}
+
+            {!loading && tab==='groups' && (
+              <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:14}}>
+                {Object.keys(GROUPS).map(g => {
+                  const rows = admin ? calcStandings(g, admin.groupScores||{}) : calcStandings(g,{});
+                  const playedGames = admin ? GROUP_GAMES[g].filter(m=>admin.groupScores?.[m.id]?.home!=='').length : 0;
+                  return (
+                    <div key={g} style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:10,overflow:'hidden'}}>
+                      <div style={{padding:'10px 14px',background:'var(--elevated)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+                        <span style={{fontFamily:'Barlow Condensed',fontWeight:800,letterSpacing:'.04em',textTransform:'uppercase'}}>Gruppe {g}</span>
+                        <span style={{fontSize:12,color:'var(--txt3)'}}>{playedGames}/6 kamper</span>
+                      </div>
+                      <table style={{width:'100%',borderCollapse:'collapse',fontSize:12}}>
+                        <thead><tr>
+                          {['','Lag','K','M','P','Pts'].map((h,i)=>(
+                            <th key={i} style={{padding:'6px 10px',textAlign:i<2?'left':'center',color:'var(--txt3)',fontWeight:600,fontSize:10,textTransform:'uppercase',letterSpacing:'.04em'}}>{h}</th>
+                          ))}
+                        </tr></thead>
+                        <tbody>{rows.map((r,i)=>{
+                          const passing = i<2;
+                          return (
+                            <tr key={r.team} style={{borderTop:'1px solid var(--border)',background:passing&&admin?'rgba(0,217,106,.04)':'transparent'}}>
+                              <td style={{padding:'7px 10px',textAlign:'center'}}>
+                                <span style={{display:'inline-block',width:16,height:16,borderRadius:'50%',background:i===0?'var(--gold)':i===1?'var(--elevated)':'transparent',border:i>1?'1px solid var(--border)':'none',fontSize:9,fontWeight:800,textAlign:'center',lineHeight:'16px',color:i===0?'#000':'var(--txt3)'}}>{i+1}</span>
+                              </td>
+                              <td style={{padding:'7px 10px',fontWeight:600,color:passing?'var(--txt)':'var(--txt2)'}}>{TEAMS[r.team]?.flag} {TEAMS[r.team]?.name}</td>
+                              <td style={{padding:'7px 10px',textAlign:'center',color:'var(--txt2)'}}>{r.played}</td>
+                              <td style={{padding:'7px 10px',textAlign:'center',color:r.gd>0?'var(--accent)':r.gd<0?'#ff4f5e':'var(--txt2)'}}>{r.gd>0?'+':''}{r.gd}</td>
+                              <td style={{padding:'7px 10px',textAlign:'center',color:'var(--txt2)'}}>{r.gf}</td>
+                              <td style={{padding:'7px 10px',textAlign:'center',fontWeight:800,color:'var(--accent)'}}>{r.pts}</td>
+                            </tr>
+                          );
+                        })}</tbody>
+                      </table>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {!loading && tab==='bracket' && (
+              <div style={{overflowX:'auto'}}>
+                {['R32','R16','QF','SF'].map(rk => {
+                  const matches = {R32,R16,QF,SF}[rk];
+                  const labels = {R32:'Runde av 32',R16:'Runde av 16',QF:'Kvartfinale',SF:'Semifinale'};
+                  const standings2 = {};
+                  Object.keys(GROUPS).forEach(g=>{standings2[g]=calcStandings(g,admin?.groupScores||{});});
+                  const thirdAct = admin?.thirdPlaceActual||[];
+                  const koRes = admin?.knockoutResults||{};
+                  return (
+                    <div key={rk} style={{marginBottom:24}}>
+                      <div style={{fontFamily:'Barlow Condensed',fontWeight:800,fontSize:16,textTransform:'uppercase',letterSpacing:'.05em',color:'var(--txt2)',marginBottom:10}}>{labels[rk]}</div>
+                      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(220px,1fr))',gap:8}}>
+                        {matches.map((m,idx)=>{
+                          let tA=null,tB=null;
+                          if(m.prev){tA=koRes[m.prev[0]]||null;tB=koRes[m.prev[1]]||null;}
+                          else{tA=resolveSlot(m.home,standings2,thirdAct,koRes);tB=resolveSlot(m.away,standings2,thirdAct,koRes);}
+                          const win=koRes[m.id];
+                          return (
+                            <div key={m.id} style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:8,overflow:'hidden'}}>
+                              <div style={{padding:'4px 10px',background:'var(--elevated)',fontSize:10,fontWeight:700,color:'var(--txt3)',letterSpacing:'.05em',textTransform:'uppercase'}}>Kamp {idx+1}</div>
+                              {[tA,tB].map((t,ti)=>(
+                                <div key={ti} style={{display:'flex',alignItems:'center',gap:8,padding:'8px 10px',borderTop:ti?'1px solid var(--border)':'none',background:win&&win===t?'var(--accent2)':'transparent',borderLeft:win&&win===t?'2px solid var(--accent)':'2px solid transparent'}}>
+                                  <span style={{fontSize:16}}>{t?TEAMS[t]?.flag:'🏳'}</span>
+                                  <span style={{fontSize:12,fontWeight:600,color:win===t?'var(--accent)':t?'var(--txt)':'var(--txt3)',fontStyle:t?'normal':'italic'}}>{t?TEAMS[t]?.name:'Avventer…'}</span>
+                                  {win===t&&<span style={{marginLeft:'auto',fontSize:10,color:'var(--accent)',fontWeight:800}}>✓</span>}
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Final + Bronze */}
+                {[BRONZE,FINAL].map(m => {
+                  const standings2={};
+                  Object.keys(GROUPS).forEach(g=>{standings2[g]=calcStandings(g,admin?.groupScores||{});});
+                  const thirdAct=admin?.thirdPlaceActual||[];
+                  const koRes=admin?.knockoutResults||{};
+                  const sfA=SF.find(sf=>sf.id===m.prev[0]),sfB=SF.find(sf=>sf.id===m.prev[1]);
+                  let tA=null,tB=null;
+                  if(m.loser){
+                    const wA=koRes['SF_1'],wB=koRes['SF_2'];
+                    const pA=[koRes[sfA?.prev?.[0]]||null,koRes[sfA?.prev?.[1]]||null];
+                    const pB=[koRes[sfB?.prev?.[0]]||null,koRes[sfB?.prev?.[1]]||null];
+                    tA=wA?pA.find(t=>t&&t!==wA)||null:null;
+                    tB=wB?pB.find(t=>t&&t!==wB)||null:null;
+                  } else {
+                    tA=koRes['SF_1']||null; tB=koRes['SF_2']||null;
+                  }
+                  const win=koRes[m.id];
+                  return (
+                    <div key={m.id} style={{maxWidth:280,marginBottom:12}}>
+                      <div style={{fontFamily:'Barlow Condensed',fontWeight:800,fontSize:16,textTransform:'uppercase',letterSpacing:'.05em',color:m.loser?'var(--txt2)':'var(--gold)',marginBottom:8}}>
+                        {m.loser?'Bronsefinale':'🏆 Finale'}
+                      </div>
+                      <div style={{background:'var(--surface)',border:`1px solid ${m.loser?'var(--border)':'rgba(255,215,0,.25)'}`,borderRadius:8,overflow:'hidden'}}>
+                        {[tA,tB].map((t,ti)=>(
+                          <div key={ti} style={{display:'flex',alignItems:'center',gap:8,padding:'10px 14px',borderTop:ti?'1px solid var(--border)':'none',background:win&&win===t?'rgba(255,215,0,.08)':'transparent',borderLeft:win&&win===t?`3px solid ${m.loser?'var(--bronze)':'var(--gold)'}`:undefined}}>
+                            <span style={{fontSize:18}}>{t?TEAMS[t]?.flag:'🏳'}</span>
+                            <span style={{fontSize:13,fontWeight:700,color:win===t?(m.loser?'var(--bronze)':'var(--gold)'):t?'var(--txt)':'var(--txt3)'}}>{t?TEAMS[t]?.name:'Avventer…'}</span>
+                            {win===t&&<span style={{marginLeft:'auto',fontSize:12,fontWeight:800,color:m.loser?'var(--bronze)':'var(--gold)'}}>🏆</span>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<LeaderboardApp/>);
+</script>
+</body>
+</html>
