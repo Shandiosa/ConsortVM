@@ -637,18 +637,19 @@ function TippingDetail({tipping, adminResults}) {
           <div className="group-grid-mini">
             {Object.keys(GROUPS).map(g=>{
               const rows=standings[g];
-              const adminRows=adminResults?calcStandings(g,adminResults.groupScores||{}):null;
+              const groupDone = isGroupComplete(adminResults?.groupScores, g);
+              const adminRows = adminResults && groupDone ? calcStandings(g, adminResults.groupScores||{}) : null;
               return(
                 <div key={g} className="group-mini">
                   <div className="group-mini-head">Gruppe {g}</div>
                   {rows.map((r,i)=>{
-                    const correct=adminRows&&adminRows[i]?.team===r.team;
+                    const correct = adminRows && adminRows[i]?.team === r.team;
                     return(
                       <div key={r.team} className="group-mini-row">
                         <span style={{color:'var(--txt3)',width:14,fontSize:10}}>{i+1}.</span>
                         <span style={{fontSize:13}}>{TEAMS[r.team]?.flag}</span>
-                        <span style={{fontSize:12,fontWeight:600,color:adminResults?(correct?'var(--accent)':'var(--txt3)'):'var(--txt2)'}}>{TEAMS[r.team]?.name}</span>
-                        {adminResults&&<span style={{marginLeft:'auto',fontSize:10}}>{correct?'✓':''}</span>}
+                        <span style={{fontSize:12,fontWeight:600,color:adminRows?(correct?'var(--accent)':'var(--txt3)'):'var(--txt2)'}}>{TEAMS[r.team]?.name}</span>
+                        {adminRows&&<span style={{marginLeft:'auto',fontSize:10}}>{correct?'✓':''}</span>}
                       </div>
                     );
                   })}
