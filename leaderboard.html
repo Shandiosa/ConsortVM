@@ -11,6 +11,8 @@
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 <script src="data.js"></script>
 <style>
+@font-face{font-family:"TwemojiFlags";unicode-range:U+1F1E6-1F1FF,U+1F3F4,U+E0062-E0063,U+E0065,U+E0067,U+E006C,U+E006E,U+E0073-E0074,U+E0077,U+E007F;src:url('https://cdn.jsdelivr.net/npm/country-flag-emoji-polyfill@0.1/dist/TwemojiCountryFlags.woff2') format('woff2');font-display:swap;}
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg:#070d18;--surface:#0d1826;--card:#122030;--elevated:#19304a;
@@ -18,7 +20,7 @@
   --txt:#e8f0fa;--txt2:#7a9cc0;--txt3:#3d5670;
   --border:rgba(255,255,255,.07);--gold:#ffd700;--silver:#bcc8d8;--bronze:#cd7f32;--r:12px;
 }
-html,body{min-height:100%;background:var(--bg);color:var(--txt);font-family:'Barlow',sans-serif;font-size:15px;line-height:1.5;}
+html,body{min-height:100%;background:var(--bg);color:var(--txt);font-family:"TwemojiFlags",'Barlow',sans-serif;font-size:15px;line-height:1.5;}
 body{background-image:repeating-linear-gradient(0deg,transparent,transparent 59px,rgba(255,255,255,.015) 59px,rgba(255,255,255,.015) 60px),repeating-linear-gradient(90deg,transparent,transparent 59px,rgba(255,255,255,.015) 59px,rgba(255,255,255,.015) 60px);}
 
 .shell{min-height:100vh;display:flex;flex-direction:column;}
@@ -82,6 +84,22 @@ body{background-image:repeating-linear-gradient(0deg,transparent,transparent 59p
 .user-email{font-size:12px;color:var(--txt3);}
 .pts-badge{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;color:var(--accent);text-align:right;}
 .champion-pick{display:inline-flex;align-items:center;gap:4px;background:rgba(255,215,0,.1);border:1px solid rgba(255,215,0,.2);color:var(--gold);border-radius:5px;padding:2px 8px;font-size:12px;font-weight:600;}
+.trend-cell{display:flex;align-items:center;justify-content:center;gap:3px;font-weight:800;font-size:12px;font-family:'Barlow Condensed',sans-serif;letter-spacing:.02em;}
+.trend-up{color:var(--accent);}
+.trend-down{color:var(--red);}
+.trend-flat{color:var(--txt3);}
+.trend-new{background:rgba(0,217,106,.12);border:1px solid rgba(0,217,106,.3);color:var(--accent);font-size:10px;padding:2px 7px;border-radius:4px;letter-spacing:.05em;}
+.movement-strip{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;}
+.movement-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:12px;flex:1;min-width:200px;}
+.movement-icon{font-size:24px;flex-shrink:0;}
+.movement-content{flex:1;min-width:0;}
+.movement-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--txt3);margin-bottom:2px;}
+.movement-name{font-weight:700;font-size:14px;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.movement-detail{font-size:11px;color:var(--txt2);margin-top:1px;}
+.movement-card.gold{border-color:rgba(255,215,0,.3);background:linear-gradient(135deg,rgba(255,215,0,.05),transparent);}
+.movement-card.green{border-color:rgba(0,217,106,.3);background:linear-gradient(135deg,rgba(0,217,106,.04),transparent);}
+.movement-card.red{border-color:rgba(255,79,94,.25);background:linear-gradient(135deg,rgba(255,79,94,.04),transparent);}
+.since-text{font-size:11px;color:var(--txt3);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
 .scorer-pick{font-size:12px;color:var(--txt2);}
 .no-data{text-align:center;padding:60px 20px;color:var(--txt3);}
 .no-data .icon{font-size:40px;margin-bottom:12px;}
@@ -124,7 +142,7 @@ body{background-image:repeating-linear-gradient(0deg,transparent,transparent 59p
 const {useState,useEffect,useRef} = React;
 
 const SUPABASE_URL = 'https://pwqdgulwrddltujjefme.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_vYR_FWX8bZB-K5y3yfaq8Q_nr47ZFZI';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3cWRndWx3cmRkbHR1amplZm1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3OTQ0NjgsImV4cCI6MjA5MjM3MDQ2OH0.H9f_cprE1SWJK5l76gBAPzfvsmMjtXGkE7D3E7vPkMA';
 const VM_START = new Date('2026-06-11T00:00:00');
 const NOW = new Date();
 
@@ -156,6 +174,7 @@ function scoreBreakdown(tipping, adminResults) {
   if (!adminResults) return detail;
 
   ALL_GAMES.forEach(game => {
+    if (!isGamePlayed(adminResults.groupScores, game.id)) return;
     const u = tipping.groupScores?.[game.id], r = adminResults.groupScores?.[game.id];
     if (!u||!r) return;
     const uh=parseInt(u.home),ua=parseInt(u.away),rh=parseInt(r.home),ra=parseInt(r.away);
@@ -165,6 +184,7 @@ function scoreBreakdown(tipping, adminResults) {
   });
 
   Object.keys(GROUPS).forEach(g => {
+    if (!isGroupComplete(adminResults.groupScores, g)) return;
     const uS = calcStandings(g, tipping.groupScores||{}), rS = calcStandings(g, adminResults.groupScores||{});
     uS.forEach((entry,i)=>{ if(rS[i]?.team===entry.team) detail.groupPositions++; });
   });
@@ -185,9 +205,9 @@ function scoreBreakdown(tipping, adminResults) {
   [uF1,uF2].forEach(t=>{if(t&&realFin.includes(t))detail.finalists++;});
 
   if(tipping.knockoutPicks?.['BRONZE']&&tipping.knockoutPicks['BRONZE']===adminResults.knockoutResults?.['BRONZE']) detail.bronze=1;
-  if(tipping.knockoutPicks?.['FINAL']&&tipping.knockoutPicks['FINAL']===adminResults.knockoutResults?.['FINAL']) detail.champion=2;
-  if(tipping.topScorer&&adminResults.topScorer&&tipping.topScorer.trim().toLowerCase()===adminResults.topScorer.trim().toLowerCase()) detail.scorer=2;
-  if(tipping.topAssist&&adminResults.topAssist&&tipping.topAssist.trim().toLowerCase()===adminResults.topAssist.trim().toLowerCase()) detail.assist=2;
+  if(tipping.knockoutPicks?.['FINAL']&&tipping.knockoutPicks['FINAL']===adminResults.knockoutResults?.['FINAL']) detail.champion=5;
+  if(tipping.topScorer&&adminResults.topScorer&&tipping.topScorer.trim().toLowerCase()===adminResults.topScorer.trim().toLowerCase()) detail.scorer=4;
+  if(tipping.topAssist&&adminResults.topAssist&&tipping.topAssist.trim().toLowerCase()===adminResults.topAssist.trim().toLowerCase()) detail.assist=3;
 
   return detail;
 }
@@ -257,7 +277,7 @@ function DetailModal({entry, adminResults, onClose}) {
 }
 
 // ── Leaderboard table ────────────────────────────────────────────────────────
-function LeaderboardTable({entries, adminResults, currentUser}) {
+function LeaderboardTable({entries, adminResults, currentUser, previousRankings, biggestClimber, biggestDropper}) {
   const [selected, setSelected] = useState(null);
   const ranked = [...entries].sort((a,b)=>b.score-a.score)
     .map((e,i,arr)=>({...e, rank: i>0&&arr[i-1].score===e.score?arr[i-1].rank:i+1}));
@@ -269,6 +289,16 @@ function LeaderboardTable({entries, adminResults, currentUser}) {
     if(r===1) return '🥇'; if(r===2) return '🥈'; if(r===3) return '🥉'; return r;
   }
 
+  function getTrend(email, currentRank) {
+    if (!previousRankings || previousRankings.length === 0) return null;
+    const prev = previousRankings.find(p => p.email === email);
+    if (!prev) return { kind: 'new' };
+    const diff = prev.rank - currentRank;
+    if (diff > 0) return { kind: 'up', diff };
+    if (diff < 0) return { kind: 'down', diff: -diff };
+    return { kind: 'flat' };
+  }
+
   return (
     <div>
       <table className="lb-table">
@@ -277,20 +307,37 @@ function LeaderboardTable({entries, adminResults, currentUser}) {
           <th>Deltaker</th>
           <th>VM-vinner tippa</th>
           <th>Toppscorer</th>
+          <th style={{textAlign:'center'}}>Trend</th>
           <th className="pts-col">Poeng</th>
         </tr></thead>
         <tbody>
           {ranked.map((e,i) => {
             const isMe = currentUser && e.email === currentUser.email;
+            const trend = getTrend(e.email, e.rank);
+            const isClimber = biggestClimber && biggestClimber.email === e.email;
+            const isDropper = biggestDropper && biggestDropper.email === e.email;
             return (
               <tr key={i} className={`lb-row ${isMe?'highlighted':''}`} onClick={()=>adminResults&&setSelected(e)}>
                 <td><span className={`rank-num ${rankClass(e.rank)}`}>{rankEmoji(e.rank)}</span></td>
                 <td>
-                  <div className="user-name">{e.name} {isMe && <span style={{color:'var(--accent)',fontSize:11}}>deg</span>}</div>
+                  <div className="user-name" style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap'}}>
+                    {e.name}
+                    {isMe && <span style={{color:'var(--accent)',fontSize:11}}>deg</span>}
+                    {isClimber && <span style={{fontSize:10,fontWeight:800,background:'rgba(0,217,106,.15)',border:'1px solid rgba(0,217,106,.35)',color:'var(--accent)',padding:'1px 6px',borderRadius:4,letterSpacing:'.04em'}}>🚀 STØRSTE KLATRER</span>}
+                    {isDropper && <span style={{fontSize:10,fontWeight:800,background:'rgba(255,79,94,.1)',border:'1px solid rgba(255,79,94,.3)',color:'var(--red)',padding:'1px 6px',borderRadius:4,letterSpacing:'.04em'}}>📉 STØRSTE FALL</span>}
+                  </div>
                   <div className="user-email">{e.email}</div>
                 </td>
                 <td>{e.champion ? <span className="champion-pick">{fmt(e.champion)}</span> : <span style={{color:'var(--txt3)'}}>–</span>}</td>
                 <td><span className="scorer-pick">{e.topScorer||'–'}</span></td>
+                <td>{trend ? (
+                  <div className="trend-cell">
+                    {trend.kind === 'up' && <><span className="trend-up">▲</span><span className="trend-up">{trend.diff}</span></>}
+                    {trend.kind === 'down' && <><span className="trend-down">▼</span><span className="trend-down">{trend.diff}</span></>}
+                    {trend.kind === 'flat' && <span className="trend-flat">–</span>}
+                    {trend.kind === 'new' && <span className="trend-new">NY</span>}
+                  </div>
+                ) : <span className="trend-flat">–</span>}</td>
                 <td><div className="pts-badge">{e.score}</div></td>
               </tr>
             );
@@ -335,7 +382,7 @@ function LeaderboardApp() {
   const sorted = [...entries].sort((a,b)=>b.score-a.score);
   const top3 = sorted.slice(0,3);
   const admin = data?.results;
-  const totalGamesPlayed = admin ? Object.values(admin.groupScores||{}).filter(s=>s.home!==''&&s.away!=='').length : 0;
+  const totalGamesPlayed = admin ? Object.values(admin.groupScores||{}).filter(s=>s.played===true).length : 0;
 
   const beforeStart = (
     <div style={{textAlign:'center',padding:'60px 20px'}}>
@@ -424,14 +471,88 @@ function LeaderboardApp() {
             {!loading && tab==='table' && (
               entries.length===0
               ? <div className="no-data"><div className="icon">📋</div><div>Ingen tippinger levert ennå.</div></div>
-              : <LeaderboardTable entries={entries} adminResults={admin} currentUser={currentUser}/>
+              : (() => {
+                  const previousRankings = admin?._previousRankings;
+                  const snapshotTime = admin?._previousSnapshotTime;
+                  // Compute biggest climber and dropper
+                  let climber = null, dropper = null;
+                  if (previousRankings && previousRankings.length > 0) {
+                    const ranked = [...entries].sort((a,b)=>b.score-a.score)
+                      .map((e,i,arr)=>({...e, rank: i>0&&arr[i-1].score===e.score?arr[i-1].rank:i+1}));
+                    let maxUp = 0, maxDown = 0;
+                    ranked.forEach(e => {
+                      const prev = previousRankings.find(p => p.email === e.email);
+                      if (!prev) return;
+                      const diff = prev.rank - e.rank;
+                      if (diff > maxUp) { maxUp = diff; climber = e; }
+                      if (-diff > maxDown) { maxDown = -diff; dropper = e; }
+                    });
+                  }
+                  // Determine "new leader": rank 1 changed since last snapshot
+                  let newLeader = null;
+                  if (previousRankings && previousRankings.length > 0) {
+                    const ranked = [...entries].sort((a,b)=>b.score-a.score);
+                    const currentLeader = ranked[0];
+                    const prevLeader = previousRankings[0];
+                    if (currentLeader && prevLeader && currentLeader.email !== prevLeader.email && currentLeader.score > 0) {
+                      newLeader = currentLeader;
+                    }
+                  }
+                  return (
+                    <>
+                      {(newLeader || climber || dropper) && (
+                        <>
+                          {snapshotTime && (
+                            <div className="since-text">
+                              <span>📊</span>
+                              <span>Endringer siden siste publisering · {new Date(snapshotTime).toLocaleString('nb-NO',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>
+                            </div>
+                          )}
+                          <div className="movement-strip">
+                            {newLeader && (
+                              <div className="movement-card gold">
+                                <div className="movement-icon">👑</div>
+                                <div className="movement-content">
+                                  <div className="movement-label">Ny leder</div>
+                                  <div className="movement-name">{newLeader.name}</div>
+                                  <div className="movement-detail">{newLeader.score} poeng</div>
+                                </div>
+                              </div>
+                            )}
+                            {climber && (
+                              <div className="movement-card green">
+                                <div className="movement-icon">🚀</div>
+                                <div className="movement-content">
+                                  <div className="movement-label">Største klatrer</div>
+                                  <div className="movement-name">{climber.name}</div>
+                                  <div className="movement-detail">+{(previousRankings.find(p=>p.email===climber.email)?.rank||0) - climber.rank} plasser · {climber.score} p</div>
+                                </div>
+                              </div>
+                            )}
+                            {dropper && (
+                              <div className="movement-card red">
+                                <div className="movement-icon">📉</div>
+                                <div className="movement-content">
+                                  <div className="movement-label">Største fall</div>
+                                  <div className="movement-name">{dropper.name}</div>
+                                  <div className="movement-detail">−{dropper.rank - (previousRankings.find(p=>p.email===dropper.email)?.rank||0)} plasser · {dropper.score} p</div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </>
+                      )}
+                      <LeaderboardTable entries={entries} adminResults={admin} currentUser={currentUser} previousRankings={previousRankings} biggestClimber={climber} biggestDropper={dropper}/>
+                    </>
+                  );
+                })()
             )}
 
             {!loading && tab==='groups' && (
               <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:14}}>
                 {Object.keys(GROUPS).map(g => {
                   const rows = admin ? calcStandings(g, admin.groupScores||{}) : calcStandings(g,{});
-                  const playedGames = admin ? GROUP_GAMES[g].filter(m=>admin.groupScores?.[m.id]?.home!=='').length : 0;
+                  const playedGames = admin ? GROUP_GAMES[g].filter(m=>admin.groupScores?.[m.id]?.played===true).length : 0;
                   return (
                     <div key={g} style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:10,overflow:'hidden'}}>
                       <div style={{padding:'10px 14px',background:'var(--elevated)',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
@@ -475,6 +596,20 @@ function LeaderboardApp() {
                   Object.keys(GROUPS).forEach(g=>{standings2[g]=calcStandings(g,admin?.groupScores||{});});
                   const thirdAct = admin?.thirdPlaceActual||[];
                   const koRes = admin?.knockoutResults||{};
+                  // Helper: only resolve R32 slot if source group is complete
+                  function safeResolve(slot) {
+                    if (!slot || !admin) return null;
+                    if (slot.startsWith('1') || slot.startsWith('2')) {
+                      const g = slot[1];
+                      if (!isGroupComplete(admin.groupScores, g)) return null;
+                      return resolveSlot(slot, standings2, thirdAct, koRes);
+                    }
+                    if (slot.startsWith('3P_')) {
+                      // Third-place teams only known when admin sets them
+                      return resolveSlot(slot, standings2, thirdAct, koRes);
+                    }
+                    return null;
+                  }
                   return (
                     <div key={rk} style={{marginBottom:24}}>
                       <div style={{fontFamily:'Barlow Condensed',fontWeight:800,fontSize:16,textTransform:'uppercase',letterSpacing:'.05em',color:'var(--txt2)',marginBottom:10}}>{labels[rk]}</div>
@@ -482,14 +617,15 @@ function LeaderboardApp() {
                         {matches.map((m,idx)=>{
                           let tA=null,tB=null;
                           if(m.prev){tA=koRes[m.prev[0]]||null;tB=koRes[m.prev[1]]||null;}
-                          else{tA=resolveSlot(m.home,standings2,thirdAct,koRes);tB=resolveSlot(m.away,standings2,thirdAct,koRes);}
+                          else{tA=safeResolve(m.home);tB=safeResolve(m.away);}
                           const win=koRes[m.id];
+                          const isInactive = !tA && !tB;
                           return (
-                            <div key={m.id} style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:8,overflow:'hidden'}}>
+                            <div key={m.id} style={{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:8,overflow:'hidden',opacity:isInactive?.5:1}}>
                               <div style={{padding:'4px 10px',background:'var(--elevated)',fontSize:10,fontWeight:700,color:'var(--txt3)',letterSpacing:'.05em',textTransform:'uppercase'}}>Kamp {idx+1}</div>
                               {[tA,tB].map((t,ti)=>(
                                 <div key={ti} style={{display:'flex',alignItems:'center',gap:8,padding:'8px 10px',borderTop:ti?'1px solid var(--border)':'none',background:win&&win===t?'var(--accent2)':'transparent',borderLeft:win&&win===t?'2px solid var(--accent)':'2px solid transparent'}}>
-                                  <span style={{fontSize:16}}>{t?TEAMS[t]?.flag:'🏳'}</span>
+                                  <span style={{fontSize:16,filter:t?'none':'grayscale(1) opacity(.4)'}}>{t?TEAMS[t]?.flag:'🏳'}</span>
                                   <span style={{fontSize:12,fontWeight:600,color:win===t?'var(--accent)':t?'var(--txt)':'var(--txt3)',fontStyle:t?'normal':'italic'}}>{t?TEAMS[t]?.name:'Avventer…'}</span>
                                   {win===t&&<span style={{marginLeft:'auto',fontSize:10,color:'var(--accent)',fontWeight:800}}>✓</span>}
                                 </div>

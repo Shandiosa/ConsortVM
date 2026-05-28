@@ -138,6 +138,8 @@ const KNOCKOUT_ROUNDS = [
 ];
 
 // Calculate group standings from score predictions
+// For admin scores: skip games where played===false (unpublished)
+// For user predictions: no played field, all count
 function calcStandings(groupId, scores) {
   const teams = GROUPS[groupId];
   const s = {};
@@ -145,6 +147,7 @@ function calcStandings(groupId, scores) {
   GROUP_GAMES[groupId].forEach(game => {
     const sc = scores[game.id];
     if (!sc || sc.home === '' || sc.away === '') return;
+    if (sc.played === false) return; // unpublished admin game - skip
     const h = parseInt(sc.home), a = parseInt(sc.away);
     if (isNaN(h) || isNaN(a)) return;
     s[game.home].played++; s[game.away].played++;
@@ -161,6 +164,16 @@ function calcStandings(groupId, scores) {
   ).map(t => ({ team: t, ...s[t] }));
 }
 
+// Helpers: which admin games are published?
+function isGamePlayed(adminGroupScores, gameId) {
+  const sc = adminGroupScores?.[gameId];
+  return !!(sc && sc.played === true);
+}
+
+function isGroupComplete(adminGroupScores, groupId) {
+  return GROUP_GAMES[groupId].every(g => isGamePlayed(adminGroupScores, g.id));
+}
+
 // Resolve a bracket slot to a team code
 function resolveSlot(slot, groupStandings, thirdPlace, picks) {
   if (!slot) return null;
@@ -168,7 +181,10 @@ function resolveSlot(slot, groupStandings, thirdPlace, picks) {
   if (slot.startsWith('2')) return groupStandings[slot[1]]?.[1]?.team ?? null;
   if (slot.startsWith('3P_')) {
     const idx = parseInt(slot.replace('3P_', '')) - 1;
-    return thirdPlace?.[idx] ?? null;
+    // Sort by group letter so slot assignment is deterministic regardless of selection order
+    const sorted = [...(thirdPlace || [])].sort((a, b) =>
+      (TEAMS[a]?.group || '').localeCompare(TEAMS[b]?.group || ''));
+    return sorted[idx] ?? null;
   }
   return null;
 }
@@ -207,11 +223,14 @@ const TIPPING_DEADLINE = new Date('2026-06-10T16:00:00');
 function calcScore(tipping, adminResults) {
   let pts = 0;
   if (!adminResults) return 0;
+  const adminScores = adminResults.groupScores || {};
+  const adminKO = adminResults.knockoutResults || adminResults.knockoutPicks || {};
 
-  // Group game outcomes (1 pt each)
+  // Group game outcomes (1 pt each) - only published games
   ALL_GAMES.forEach(game => {
+    if (!isGamePlayed(adminScores, game.id)) return;
     const user = tipping.groupScores?.[game.id];
-    const real = adminResults.groupScores?.[game.id];
+    const real = adminScores[game.id];
     if (!user || !real) return;
     const uh = parseInt(user.home), ua = parseInt(user.away);
     const rh = parseInt(real.home), ra = parseInt(real.away);
@@ -221,10 +240,11 @@ function calcScore(tipping, adminResults) {
     if (uRes === rRes) pts++;
   });
 
-  // Group positions (1 pt each correct position, all 4 in each group)
+  // Group positions (1 pt per correct position) – only when ALL 6 games in a group are played
   Object.keys(GROUPS).forEach(g => {
+    if (!isGroupComplete(adminScores, g)) return;
     const userStand = calcStandings(g, tipping.groupScores || {});
-    const realStand = calcStandings(g, adminResults.groupScores || {});
+    const realStand = calcStandings(g, adminScores);
     userStand.forEach((entry, idx) => {
       if (realStand[idx]?.team === entry.team) pts++;
     });
@@ -236,7 +256,7 @@ function calcScore(tipping, adminResults) {
     const matches = { R32, R16, QF, SF }[roundKey];
     matches.forEach(match => {
       const userPick = tipping.knockoutPicks?.[match.id];
-      const realPick = adminResults.knockoutPicks?.[match.id];
+      const realPick = adminKO[match.id];
       if (userPick && realPick && userPick === realPick) pts += 2;
     });
   });
@@ -244,24 +264,24 @@ function calcScore(tipping, adminResults) {
   // Finalists (1 pt each correct finalist)
   const userFin1 = tipping.knockoutPicks?.['SF_1'];
   const userFin2 = tipping.knockoutPicks?.['SF_2'];
-  const realFin1 = adminResults.knockoutPicks?.['SF_1'];
-  const realFin2 = adminResults.knockoutPicks?.['SF_2'];
+  const realFin1 = adminKO['SF_1'];
+  const realFin2 = adminKO['SF_2'];
   const realFinalists = [realFin1, realFin2].filter(Boolean);
   [userFin1, userFin2].forEach(t => { if (t && realFinalists.includes(t)) pts++; });
 
   // Bronze (1 pt)
-  if (tipping.knockoutPicks?.['BRONZE'] && tipping.knockoutPicks['BRONZE'] === adminResults.knockoutPicks?.['BRONZE']) pts++;
+  if (tipping.knockoutPicks?.['BRONZE'] && tipping.knockoutPicks['BRONZE'] === adminKO['BRONZE']) pts++;
 
-  // Champion (2 pts)
-  if (tipping.knockoutPicks?.['FINAL'] && tipping.knockoutPicks['FINAL'] === adminResults.knockoutPicks?.['FINAL']) pts += 2;
+  // Champion (5 pts)
+  if (tipping.knockoutPicks?.['FINAL'] && tipping.knockoutPicks['FINAL'] === adminKO['FINAL']) pts += 5;
 
-  // Top scorer (2 pts)
+  // Top scorer (4 pts)
   if (tipping.topScorer && adminResults.topScorer &&
-      tipping.topScorer.trim().toLowerCase() === adminResults.topScorer.trim().toLowerCase()) pts += 2;
+      tipping.topScorer.trim().toLowerCase() === adminResults.topScorer.trim().toLowerCase()) pts += 4;
 
-  // Top assist (2 pts)
+  // Top assist (3 pts)
   if (tipping.topAssist && adminResults.topAssist &&
-      tipping.topAssist.trim().toLowerCase() === adminResults.topAssist.trim().toLowerCase()) pts += 2;
+      tipping.topAssist.trim().toLowerCase() === adminResults.topAssist.trim().toLowerCase()) pts += 3;
 
   return pts;
 }

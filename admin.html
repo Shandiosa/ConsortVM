@@ -10,7 +10,10 @@
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 <script src="data.js"></script>
+<script src="players.js"></script>
 <style>
+@font-face{font-family:"TwemojiFlags";unicode-range:U+1F1E6-1F1FF,U+1F3F4,U+E0062-E0063,U+E0065,U+E0067,U+E006C,U+E006E,U+E0073-E0074,U+E0077,U+E007F;src:url('https://cdn.jsdelivr.net/npm/country-flag-emoji-polyfill@0.1/dist/TwemojiCountryFlags.woff2') format('woff2');font-display:swap;}
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg:#070d18;--surface:#0d1826;--card:#122030;--elevated:#19304a;
@@ -18,7 +21,7 @@
   --txt:#e8f0fa;--txt2:#7a9cc0;--txt3:#3d5670;
   --border:rgba(255,255,255,.07);--red:#ff4f5e;--gold:#ffd700;--r:10px;
 }
-html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Barlow',sans-serif;font-size:15px;}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:"TwemojiFlags",'Barlow',sans-serif;font-size:15px;}
 body{background-image:repeating-linear-gradient(0deg,transparent,transparent 59px,rgba(255,255,255,.015) 59px,rgba(255,255,255,.015) 60px);}
 .shell{min-height:100vh;display:flex;flex-direction:column;}
 .topbar{display:flex;align-items:center;gap:12px;padding:14px 24px;border-bottom:1px solid var(--border);background:rgba(7,13,24,.9);backdrop-filter:blur(10px);position:sticky;top:0;z-index:100;}
@@ -43,7 +46,31 @@ body{background-image:repeating-linear-gradient(0deg,transparent,transparent 59p
 .gtab{padding:5px 11px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--txt2);font-size:12px;font-weight:600;cursor:pointer;font-family:'Barlow',sans-serif;transition:all .2s;}
 .gtab.active{background:var(--accent);color:#000;border-color:var(--accent);}
 .gtab.filled{border-color:rgba(0,217,106,.4);color:rgba(0,217,106,.6);}
-.game-row{display:grid;grid-template-columns:1fr 160px 1fr;align-items:center;gap:10px;background:var(--surface);border-radius:8px;padding:10px 14px;border:1px solid var(--border);margin-bottom:8px;}
+.game-row{display:grid;grid-template-columns:1fr 160px 1fr 180px;align-items:center;gap:10px;background:var(--surface);border-radius:8px;padding:10px 14px;border:1px solid var(--border);margin-bottom:8px;}
+.game-row.played{border-left:3px solid var(--accent);background:rgba(0,217,106,.03);}
+.game-publish{display:flex;align-items:center;gap:8px;justify-content:flex-end;}
+.game-status{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:3px 8px;border-radius:4px;}
+.game-status.unplayed{background:var(--elevated);color:var(--txt3);}
+.game-status.played{background:rgba(0,217,106,.12);color:var(--accent);border:1px solid rgba(0,217,106,.25);}
+.game-status.edited{background:rgba(255,193,7,.12);color:#ffc107;border:1px solid rgba(255,193,7,.25);}
+.publish-btn{background:var(--accent);color:#000;border:none;border-radius:6px;padding:6px 12px;font-size:11px;font-weight:800;cursor:pointer;font-family:'Barlow',sans-serif;letter-spacing:.04em;text-transform:uppercase;transition:all .2s;}
+.publish-btn:hover{background:#00f07a;}
+.publish-btn.outline{background:transparent;border:1px solid var(--border);color:var(--txt2);}
+.publish-btn.outline:hover{border-color:var(--accent);color:var(--accent);}
+.publish-btn:disabled{opacity:.5;cursor:not-allowed;}
+.unpublish-btn{background:transparent;border:1px solid rgba(255,79,94,.3);color:var(--red);border-radius:6px;padding:5px 9px;font-size:10px;font-weight:700;cursor:pointer;font-family:'Barlow',sans-serif;letter-spacing:.04em;text-transform:uppercase;}
+.unpublish-btn:hover{background:rgba(255,79,94,.08);}
+
+/* Autocomplete dropdown */
+.ac-wrap{position:relative;flex:1;}
+.ac-dropdown{position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--elevated);border:1px solid rgba(0,217,106,.25);border-radius:8px;z-index:50;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.5);max-height:280px;overflow-y:auto;}
+.ac-item{display:flex;align-items:center;gap:10px;padding:9px 14px;cursor:pointer;border-top:1px solid rgba(255,255,255,.05);transition:background .1s;}
+.ac-item:first-child{border-top:none;}
+.ac-item:hover{background:rgba(0,217,106,.1);}
+.ac-name{font-weight:700;font-size:13px;color:var(--txt);}
+.ac-info{font-size:10px;color:var(--txt2);}
+.ac-empty{padding:10px 14px;font-size:12px;color:var(--txt3);font-style:italic;}
+.ac-freeform{padding:8px 14px;border-top:1px solid rgba(255,255,255,.05);font-size:11px;color:var(--txt3);display:flex;align-items:center;gap:6px;}
 .game-team{display:flex;align-items:center;gap:8px;font-weight:600;font-size:13px;}
 .game-team.right{flex-direction:row-reverse;text-align:right;}
 .score-inputs{display:flex;align-items:center;justify-content:center;gap:6px;}
@@ -65,7 +92,12 @@ body{background-image:repeating-linear-gradient(0deg,transparent,transparent 59p
 .ko-team .tname{flex:1;font-weight:600;font-size:13px;}
 .ko-team.picked{background:var(--accent2);border-left:3px solid var(--accent);}
 .ko-team.picked .tname{color:var(--accent);}
+.ko-team.staged{background:rgba(255,193,7,.08);border-left:3px solid #ffc107;}
+.ko-team.staged .tname{color:#ffc107;}
 .ko-team.tbd{cursor:default;opacity:.5;}
+.confirm-btn{background:var(--accent);color:#000;border:none;border-radius:5px;padding:4px 10px;font-size:11px;font-weight:800;cursor:pointer;font-family:'Barlow',sans-serif;margin-left:8px;letter-spacing:.03em;}
+.confirm-btn:hover{background:#00f07a;}
+.cancel-stage-btn{background:transparent;border:1px solid rgba(255,79,94,.3);color:var(--red);border-radius:5px;padding:3px 7px;font-size:10px;font-weight:700;cursor:pointer;font-family:'Barlow',sans-serif;margin-left:4px;}
 .btn{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border-radius:8px;font-family:'Barlow',sans-serif;font-size:14px;font-weight:700;cursor:pointer;border:none;transition:all .2s;}
 .btn-primary{background:var(--accent);color:#000;}
 .btn-primary:hover{background:#00f07a;}
@@ -134,8 +166,10 @@ const {useState, useEffect, useRef} = React;
 
 const ADMIN_PASSWORD = 'VMiFotballConsort';
 const SUPABASE_URL = 'https://pwqdgulwrddltujjefme.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_vYR_FWX8bZB-K5y3yfaq8Q_nr47ZFZI';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3cWRndWx3cmRkbHR1amplZm1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3OTQ0NjgsImV4cCI6MjA5MjM3MDQ2OH0.H9f_cprE1SWJK5l76gBAPzfvsmMjtXGkE7D3E7vPkMA';
 const LS_RESULTS = 'vm26_admin_results';
+const LS_RESULTS_DRAFT = 'vm26_admin_draft';
+const LS_PUBLISHED_AT = 'vm26_published_at';
 
 function lsGet(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }
 function lsSet(k,v){ localStorage.setItem(k, JSON.stringify(v)); }
@@ -165,6 +199,16 @@ async function loadTippinger() {
   const remote = await sbFetch('tippinger?select=data,levert_tid&order=levert_tid.asc');
   if (remote?.length) return remote.map(r => r.data);
   return lsGet('vm26_submitted_tippings') || [];
+}
+
+async function testConnection() {
+  if (!SUPABASE_URL || !SUPABASE_KEY) return false;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/resultater?select=id&limit=1`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    return res.ok;
+  } catch { return false; }
 }
 
 async function loadResults() {
@@ -197,22 +241,100 @@ function ScoreInput({value, onChange}) {
   );
 }
 
+
+// ── PlayerAutocomplete ────────────────────────────────────────────────────────
+function PlayerAutocomplete({ value, onChange, placeholder, onSelect }) {
+  const [open, setOpen] = useState(false);
+  const suggestions = (typeof searchPlayers!=='undefined') ? searchPlayers(value||'') : [];
+  const wrapRef = useRef(null);
+  useEffect(()=>{
+    function h(e){ if(wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false); }
+    document.addEventListener('mousedown', h);
+    return ()=>document.removeEventListener('mousedown', h);
+  }, []);
+  const show = open && (value||'').trim().length>=1;
+  return (
+    <div ref={wrapRef} className="ac-wrap">
+      <input
+        className="award-input"
+        value={value||''}
+        placeholder={placeholder}
+        autoComplete="off"
+        onFocus={()=>setOpen(true)}
+        onChange={e=>{ onChange(e.target.value); setOpen(true); }}
+      />
+      {show && (
+        <div className="ac-dropdown">
+          {suggestions.length===0 && <div className="ac-empty">Ingen forslag – skriv fritt ✍️</div>}
+          {suggestions.map((p,i)=>(
+            <div key={i} className="ac-item"
+              onMouseDown={e=>{e.preventDefault(); onChange(p.name); setOpen(false); onSelect&&onSelect(p);}}>
+              <span style={{fontSize:18}}>{TEAMS[p.team]?.flag||p.flag}</span>
+              <div style={{flex:1,minWidth:0}}>
+                <div className="ac-name">{p.name}</div>
+                <div className="ac-info">{TEAMS[p.team]?.name} · {p.info}</div>
+              </div>
+            </div>
+          ))}
+          {(value||'').trim() && !PLAYERS.some(p=>p.name.toLowerCase()===(value||'').trim().toLowerCase()) && (
+            <div className="ac-freeform"><span>✍️</span><span>Bruk «<span style={{color:'var(--txt)',fontWeight:600}}>{value.trim()}</span>» som eget svar</span></div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Group results panel ──────────────────────────────────────────────────────
-function GroupResultsPanel({results, setResults}) {
+function GroupResultsPanel({results, setResults, commit}) {
   const [activeGroup, setActiveGroup] = useState('A');
+  const [publishing, setPublishing] = useState(null); // gameId being published
   const groupIds = Object.keys(GROUPS);
+
   function isGroupFilled(g) {
-    return GROUP_GAMES[g].every(game => {
-      const s = results.groupScores?.[game.id];
-      return s && s.home!==undefined && s.away!==undefined;
-    });
+    return GROUP_GAMES[g].every(game => results.groupScores?.[game.id]?.played === true);
   }
+
   function setScore(gameId, side, val) {
     setResults(prev => ({
       ...prev,
-      groupScores: { ...prev.groupScores, [gameId]: { ...(prev.groupScores?.[gameId]||{home:0,away:0}), [side]: val } }
+      groupScores: { ...prev.groupScores, [gameId]: { ...(prev.groupScores?.[gameId]||{home:0,away:0,played:false}), [side]: val } }
     }));
   }
+
+  async function publishGame(gameId) {
+    setPublishing(gameId);
+    const sc = results.groupScores?.[gameId] || {home:0,away:0};
+    const updated = {
+      ...results,
+      groupScores: {
+        ...results.groupScores,
+        [gameId]: { home: sc.home||0, away: sc.away||0, played: true, publishedAt: new Date().toISOString() }
+      }
+    };
+    setResults(updated);
+    await commit(updated);
+    setPublishing(null);
+  }
+
+  async function unpublishGame(gameId) {
+    if (!window.confirm('Marker denne kampen som ikke spilt? Den vil ikke telle i poengberegningen.')) return;
+    setPublishing(gameId);
+    const updated = {
+      ...results,
+      groupScores: {
+        ...results.groupScores,
+        [gameId]: { ...(results.groupScores?.[gameId]||{home:0,away:0}), played: false }
+      }
+    };
+    setResults(updated);
+    await commit(updated);
+    setPublishing(null);
+  }
+
+  const games = GROUP_GAMES[activeGroup];
+  const playedCount = games.filter(g=>results.groupScores?.[g.id]?.played===true).length;
+
   return (
     <div>
       <div className="group-tabs">
@@ -221,13 +343,16 @@ function GroupResultsPanel({results, setResults}) {
             onClick={()=>setActiveGroup(g)}>Gr. {g}{isGroupFilled(g)&&activeGroup!==g?' ✓':''}</button>
         ))}
       </div>
-      <div style={{color:'var(--txt2)',fontSize:12,marginBottom:12}}>
-        Gruppe {activeGroup}: {GROUPS[activeGroup].map(t=>TEAMS[t]?.name).join(' · ')}
+      <div style={{color:'var(--txt2)',fontSize:12,marginBottom:16,display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+        <span>Gruppe {activeGroup}: {GROUPS[activeGroup].map(t=>TEAMS[t]?.name).join(' · ')}</span>
+        <span style={{color:'var(--accent)',fontWeight:700}}>{playedCount}/6 publisert</span>
       </div>
-      {GROUP_GAMES[activeGroup].map(game => {
-        const sc = results.groupScores?.[game.id] || {home:0,away:0};
+      {games.map(game => {
+        const sc = results.groupScores?.[game.id] || {home:0,away:0,played:false};
+        const isPlayed = sc.played === true;
+        const isThisPublishing = publishing === game.id;
         return (
-          <div key={game.id} className="game-row">
+          <div key={game.id} className={`game-row ${isPlayed?'played':''}`}>
             <div className="game-team"><span style={{fontSize:16}}>{TEAMS[game.home]?.flag}</span>{TEAMS[game.home]?.name}</div>
             <div className="score-inputs">
               <ScoreInput value={sc.home} onChange={v=>setScore(game.id,'home',v)}/>
@@ -235,6 +360,24 @@ function GroupResultsPanel({results, setResults}) {
               <ScoreInput value={sc.away} onChange={v=>setScore(game.id,'away',v)}/>
             </div>
             <div className="game-team right">{TEAMS[game.away]?.name}<span style={{fontSize:16}}>{TEAMS[game.away]?.flag}</span></div>
+            <div className="game-publish">
+              {isPlayed ? (
+                <>
+                  <span className="game-status played">✓ Publisert</span>
+                  <button className="publish-btn outline" disabled={isThisPublishing} onClick={()=>publishGame(game.id)} title="Lagre nytt resultat">
+                    {isThisPublishing?'…':'Oppdater'}
+                  </button>
+                  <button className="unpublish-btn" disabled={isThisPublishing} onClick={()=>unpublishGame(game.id)} title="Marker som ikke spilt">↩</button>
+                </>
+              ) : (
+                <>
+                  <span className="game-status unplayed">Ikke spilt</span>
+                  <button className="publish-btn" disabled={isThisPublishing} onClick={()=>publishGame(game.id)}>
+                    {isThisPublishing?'…':'🚀 Publiser'}
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         );
       })}
@@ -243,8 +386,23 @@ function GroupResultsPanel({results, setResults}) {
 }
 
 // ── Knockout results panel ───────────────────────────────────────────────────
-function KnockoutResultsPanel({results, setResults}) {
+function KnockoutResultsPanel({results, setResults, commit}) {
+  const [committing, setCommitting] = useState(null);
+  const [staged, setStaged] = useState({});
   const [activeRound, setActiveRound] = useState('R32');
+
+  function stageMatch(matchId, team) {
+    setStaged(prev => ({...prev, [matchId]: prev[matchId] === team ? undefined : team}));
+  }
+  function cancelStage(matchId) {
+    setStaged(prev => { const n={...prev}; delete n[matchId]; return n; });
+  }
+  async function confirmStage(matchId) {
+    const team = staged[matchId];
+    if (!team) return;
+    cancelStage(matchId);
+    await setWinner(matchId, team);
+  }
   const standings = {};
   Object.keys(GROUPS).forEach(g=>{standings[g]=calcStandings(g,results.groupScores||{});});
   const thirdPlace = results.thirdPlaceActual||[];
@@ -268,17 +426,31 @@ function KnockoutResultsPanel({results, setResults}) {
     }
     return [resolveTeam(match.home), resolveTeam(match.away)];
   }
-  function setWinner(matchId, team) {
+  async function setWinner(matchId, team) {
     if(!team) return;
-    setResults(prev=>({...prev, knockoutResults:{...(prev.knockoutResults||{}),[matchId]:team}}));
+    setCommitting(matchId);
+    const updated = {...results, knockoutResults:{...(results.knockoutResults||{}),[matchId]:team}};
+    setResults(updated);
+    await commit(updated);
+    setCommitting(null);
   }
-  function setThirdActual(team) {
-    setResults(prev=>{
-      const cur=prev.thirdPlaceActual||[];
-      if(cur.includes(team)) return{...prev,thirdPlaceActual:cur.filter(t=>t!==team)};
-      if(cur.length>=8) return prev;
-      return{...prev,thirdPlaceActual:[...cur,team]};
-    });
+  async function clearWinner(matchId) {
+    setCommitting(matchId);
+    const newKo = {...(results.knockoutResults||{})};
+    delete newKo[matchId];
+    const updated = {...results, knockoutResults: newKo};
+    setResults(updated);
+    await commit(updated);
+    setCommitting(null);
+  }
+  async function setThirdActual(team) {
+    const cur = results.thirdPlaceActual||[];
+    let updated;
+    if(cur.includes(team)) updated = {...results, thirdPlaceActual: cur.filter(t=>t!==team)};
+    else if(cur.length>=8) return;
+    else updated = {...results, thirdPlaceActual: [...cur, team]};
+    setResults(updated);
+    await commit(updated);
   }
   const roundOrder=['R32','R16','QF','SF','BRONZE','FINAL'];
   function getRoundMatches(rk){return{R32,R16,QF,SF,BRONZE:[BRONZE],FINAL:[FINAL]}[rk]||[];}
@@ -318,12 +490,24 @@ function KnockoutResultsPanel({results, setResults}) {
           <div key={match.id} className="ko-match">
             <div className="ko-match-label">{ROUND_LABELS[activeRound]} · Kamp {idx+1}{match.loser?' (3.plass)':''}</div>
             {[tA,tB].map((team,ti)=>{
-              const isTbd=!team,isPicked=won===team&&!isTbd;
+              const isTbd=!team,isPicked=won===team&&!isTbd,isStaged=staged[match.id]===team&&!isTbd;
               return(
-                <div key={ti} className={`ko-team ${isTbd?'tbd':''} ${isPicked?'picked':''}`}
-                  onClick={()=>!isTbd&&setWinner(match.id,team)}>
-                  {isTbd?<><span style={{fontSize:18}}>🏳</span><span style={{color:'var(--txt3)',fontStyle:'italic',fontSize:12}}>Avventer…</span></>
-                  :<><span className="flag">{TEAMS[team]?.flag}</span><span className="tname">{TEAMS[team]?.name}</span>{isPicked&&<span style={{color:'var(--accent)',fontWeight:800,fontSize:12}}>✓ VINNER</span>}</>}
+                <div key={ti} className={`ko-team ${isTbd?'tbd':''} ${isPicked?'picked':''} ${isStaged?'staged':''}`}
+                  onClick={()=>{ if(!isTbd&&!committing&&!isPicked) stageMatch(match.id,team); }}>
+                  {isTbd
+                    ? <><span style={{fontSize:18}}>🏳</span><span style={{color:'var(--txt3)',fontStyle:'italic',fontSize:12}}>Avventer…</span></>
+                    : <><span className="flag">{TEAMS[team]?.flag}</span><span className="tname">{TEAMS[team]?.name}</span>
+                      {isPicked && <>
+                        <span style={{color:'var(--accent)',fontWeight:800,fontSize:12}}>{committing===match.id?'…':'✓ VINNER'}</span>
+                        <button onClick={e=>{e.stopPropagation();clearWinner(match.id);}} className="unpublish-btn" style={{marginLeft:6,padding:'3px 7px',fontSize:10}}>↩ Fjern</button>
+                      </>}
+                      {isStaged && <>
+                        <span style={{color:'#ffc107',fontWeight:800,fontSize:12}}>? Valgt</span>
+                        <button className="confirm-btn" onClick={e=>{e.stopPropagation();confirmStage(match.id);}}>✓ Bekreft vinner</button>
+                        <button className="cancel-stage-btn" onClick={e=>{e.stopPropagation();cancelStage(match.id);}}>✕</button>
+                      </>}
+                    </>
+                  }
                 </div>
               );
             })}
@@ -339,6 +523,7 @@ function getBreakdown(tipping, adminResults) {
   const bd = { groupOutcomes:0, groupPositions:0, knockout:{R32:0,R16:0,QF:0,SF:0}, finalists:0, bronze:0, champion:0, scorer:0, assist:0 };
   if (!adminResults) return bd;
   ALL_GAMES.forEach(game=>{
+    if(!isGamePlayed(adminResults.groupScores, game.id)) return;
     const u=tipping.groupScores?.[game.id],r=adminResults.groupScores?.[game.id];
     if(!u||!r) return;
     const uh=parseInt(u.home),ua=parseInt(u.away),rh=parseInt(r.home),ra=parseInt(r.away);
@@ -346,6 +531,7 @@ function getBreakdown(tipping, adminResults) {
     if((uh>ua?'H':uh<ua?'A':'D')===(rh>ra?'H':rh<ra?'A':'D')) bd.groupOutcomes++;
   });
   Object.keys(GROUPS).forEach(g=>{
+    if(!isGroupComplete(adminResults.groupScores, g)) return;
     const uS=calcStandings(g,tipping.groupScores||{}),rS=calcStandings(g,adminResults.groupScores||{});
     uS.forEach((e,i)=>{if(rS[i]?.team===e.team) bd.groupPositions++;});
   });
@@ -359,9 +545,9 @@ function getBreakdown(tipping, adminResults) {
   const rF=[adminResults.knockoutResults?.['SF_1'],adminResults.knockoutResults?.['SF_2']].filter(Boolean);
   [tipping.knockoutPicks?.['SF_1'],tipping.knockoutPicks?.['SF_2']].forEach(t=>{if(t&&rF.includes(t))bd.finalists++;});
   if(tipping.knockoutPicks?.['BRONZE']&&tipping.knockoutPicks['BRONZE']===adminResults.knockoutResults?.['BRONZE']) bd.bronze=1;
-  if(tipping.knockoutPicks?.['FINAL']&&tipping.knockoutPicks['FINAL']===adminResults.knockoutResults?.['FINAL']) bd.champion=2;
-  if(tipping.topScorer&&adminResults.topScorer&&tipping.topScorer.trim().toLowerCase()===adminResults.topScorer.trim().toLowerCase()) bd.scorer=2;
-  if(tipping.topAssist&&adminResults.topAssist&&tipping.topAssist.trim().toLowerCase()===adminResults.topAssist.trim().toLowerCase()) bd.assist=2;
+  if(tipping.knockoutPicks?.['FINAL']&&tipping.knockoutPicks['FINAL']===adminResults.knockoutResults?.['FINAL']) bd.champion=5;
+  if(tipping.topScorer&&adminResults.topScorer&&tipping.topScorer.trim().toLowerCase()===adminResults.topScorer.trim().toLowerCase()) bd.scorer=4;
+  if(tipping.topAssist&&adminResults.topAssist&&tipping.topAssist.trim().toLowerCase()===adminResults.topAssist.trim().toLowerCase()) bd.assist=3;
   return bd;
 }
 
@@ -643,16 +829,50 @@ function UsersPanel({results}) {
 }
 
 // ── Awards panel ─────────────────────────────────────────────────────────────
-function AwardsPanel({results, setResults}) {
-  return(
+function AwardsPanel({results, setResults, commit}) {
+  const [savingScorer, setSavingScorer] = useState(false);
+  const [savingAssist, setSavingAssist] = useState(false);
+  const [savedScorer, setSavedScorer]   = useState(false);
+  const [savedAssist, setSavedAssist]   = useState(false);
+
+  async function save(field, setSaving, setSaved) {
+    setSaving(true);
+    await commit(results);
+    setSaving(false);
+    setSaved(true);
+    setTimeout(()=>setSaved(false), 2000);
+  }
+
+  return (
     <div>
-      <div className="award-input-row">
-        <label>⚽ Faktisk toppscorer</label>
-        <input value={results.topScorer||''} onChange={e=>setResults(r=>({...r,topScorer:e.target.value}))} placeholder="F.eks. Erling Haaland"/>
+      <div style={{marginBottom:18}}>
+        <label style={{display:'block',fontSize:13,fontWeight:600,color:'var(--txt2)',marginBottom:8,textTransform:'uppercase',letterSpacing:'.04em'}}>⚽ Faktisk toppscorer</label>
+        <div style={{display:'flex',gap:10,alignItems:'flex-start'}}>
+          <PlayerAutocomplete
+            value={results.topScorer||''}
+            onChange={v=>setResults(r=>({...r,topScorer:v}))}
+            placeholder="Søk etter spiller…"
+          />
+          <button className="publish-btn" disabled={savingScorer} onClick={()=>save('topScorer', setSavingScorer, setSavedScorer)} style={{padding:'10px 18px',fontSize:12}}>
+            {savingScorer?'…':savedScorer?'✓ Lagret':'🚀 Publiser'}
+          </button>
+        </div>
+        <div style={{fontSize:11,color:'var(--txt3)',marginTop:6}}>Kan oppdateres når som helst under turneringen.</div>
       </div>
-      <div className="award-input-row">
-        <label>🎯 Faktisk topp-assist</label>
-        <input value={results.topAssist||''} onChange={e=>setResults(r=>({...r,topAssist:e.target.value}))} placeholder="F.eks. Kevin De Bruyne"/>
+
+      <div>
+        <label style={{display:'block',fontSize:13,fontWeight:600,color:'var(--txt2)',marginBottom:8,textTransform:'uppercase',letterSpacing:'.04em'}}>🎯 Faktisk topp-assist</label>
+        <div style={{display:'flex',gap:10,alignItems:'flex-start'}}>
+          <PlayerAutocomplete
+            value={results.topAssist||''}
+            onChange={v=>setResults(r=>({...r,topAssist:v}))}
+            placeholder="Søk etter spiller…"
+          />
+          <button className="publish-btn" disabled={savingAssist} onClick={()=>save('topAssist', setSavingAssist, setSavedAssist)} style={{padding:'10px 18px',fontSize:12}}>
+            {savingAssist?'…':savedAssist?'✓ Lagret':'🚀 Publiser'}
+          </button>
+        </div>
+        <div style={{fontSize:11,color:'var(--txt3)',marginTop:6}}>Kan oppdateres når som helst under turneringen.</div>
       </div>
     </div>
   );
@@ -668,12 +888,14 @@ function AdminApp() {
   const [connected, setConnected] = useState(null); // null=unknown, true/false
 
   const [results, setResults] = useState(()=>{
-    const saved=lsGet(LS_RESULTS);
-    if(saved) return saved;
+    const saved = lsGet(LS_RESULTS);
+    if (saved) return saved;
     const groupScores={};
-    ALL_GAMES.forEach(game=>{groupScores[game.id]={home:0,away:0};});
+    ALL_GAMES.forEach(game=>{groupScores[game.id]={home:0,away:0,played:false};});
     return{groupScores,knockoutResults:{},thirdPlaceActual:[],topScorer:'',topAssist:''};
   });
+  const [lastSync, setLastSync] = useState(()=>lsGet('vm26_last_sync'));
+  const [syncing, setSyncing]   = useState(false);
 
   function login() {
     if(pw===ADMIN_PASSWORD){setAuthed(true);setPwErr('');}
@@ -682,22 +904,40 @@ function AdminApp() {
 
   useEffect(()=>{
     if(!authed) return;
-    // Check Supabase connection & load saved results
     (async()=>{
-      const r=await loadResults();
-      if(r){setResults(r);setConnected(true);}
-      else if(SUPABASE_URL){setConnected(false);}
-      else setConnected(null);
+      const isConn = await testConnection();
+      setConnected(isConn);
+      if (isConn) {
+        const r = await loadResults();
+        if (r) setResults(r);
+      }
     })();
   },[authed]);
 
-  useEffect(()=>{if(authed) lsSet(LS_RESULTS,results);},[results,authed]);
+  // Auto-save locally on every change
+  useEffect(()=>{if(authed) lsSet(LS_RESULTS, results);},[results,authed]);
 
-  async function saveAndPublish(){
-    lsSet(LS_RESULTS,results);
-    await saveResultsToSupabase(results);
-    setSaved(true);
-    setTimeout(()=>setSaved(false),2500);
+  // Commit – save results to Supabase. Called by panels per-row.
+  // Also snapshots previous rankings so leaderboard can show trends.
+  async function commit(updated) {
+    setSyncing(true);
+    try {
+      const tippings = await loadTippinger();
+      const oldResults = lsGet(LS_RESULTS);
+      const previousRankings = tippings.map(t => ({
+        email: t.user?.email,
+        name: t.user?.name,
+        score: calcScore(t, oldResults),
+      })).sort((a,b)=>b.score-a.score).map((r,i)=>({ ...r, rank: i+1 }));
+      const now = new Date().toISOString();
+      const withSnapshot = { ...updated, _previousRankings: previousRankings, _previousSnapshotTime: now };
+      lsSet(LS_RESULTS, withSnapshot);
+      await saveResultsToSupabase(withSnapshot);
+      lsSet('vm26_last_sync', now);
+      setLastSync(now);
+    } finally {
+      setSyncing(false);
+    }
   }
 
   if(!authed){
@@ -755,16 +995,31 @@ function AdminApp() {
               </div>
             ))}
             <div style={{padding:'16px 18px',borderTop:'1px solid var(--border)'}}>
-              <button className="btn btn-primary" style={{width:'100%',justifyContent:'center',fontSize:13}} onClick={saveAndPublish}>
-                💾 Lagre og publiser
-              </button>
-              <span className={`save-notice ${saved?'show':''}`}>✓ Lagret!</span>
+              <div style={{fontSize:11,color:'var(--txt3)',marginBottom:8,letterSpacing:'.04em',textTransform:'uppercase',fontWeight:700}}>Sync-status</div>
+              {syncing && (
+                <div style={{background:'rgba(255,193,7,.08)',border:'1px solid rgba(255,193,7,.25)',borderRadius:6,padding:'8px 10px',fontSize:11,color:'#ffc107',display:'flex',alignItems:'center',gap:6}}>
+                  <span style={{width:6,height:6,background:'#ffc107',borderRadius:'50%'}}></span>
+                  <span>Synker…</span>
+                </div>
+              )}
+              {!syncing && lastSync && (
+                <div style={{background:'rgba(0,217,106,.06)',border:'1px solid rgba(0,217,106,.2)',borderRadius:6,padding:'8px 10px',fontSize:11,color:'var(--accent)',display:'flex',alignItems:'center',gap:6}}>
+                  <span style={{width:6,height:6,background:'var(--accent)',borderRadius:'50%'}}></span>
+                  <span>Sist lagret · {new Date(lastSync).toLocaleString('nb-NO',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</span>
+                </div>
+              )}
+              {!syncing && !lastSync && (
+                <div style={{fontSize:11,color:'var(--txt3)'}}>Ingen endringer publisert ennå.</div>
+              )}
+              <div style={{fontSize:10,color:'var(--txt3)',marginTop:10,lineHeight:1.4}}>
+                💡 Hver kamp publiseres separat med egne knapper. Endringer lagres automatisk når du publiserer.
+              </div>
             </div>
           </div>
           <div>
-            {panel==='groups'&&<div className="card"><div className="card-title">Kampresultater – Gruppespill</div><div className="card-sub">Legg inn de faktiske kampresultatene.</div><GroupResultsPanel results={results} setResults={setResults}/></div>}
-            {panel==='knockout'&&<div className="card"><div className="card-title">Sluttspillresultater</div><div className="card-sub">Legg inn faktiske vinnere runde for runde.</div><KnockoutResultsPanel results={results} setResults={setResults}/></div>}
-            {panel==='awards'&&<div className="card"><div className="card-title">Standouts</div><div className="card-sub">Faktisk toppscorer og topp-assist.</div><AwardsPanel results={results} setResults={setResults}/></div>}
+            {panel==='groups'&&<div className="card"><div className="card-title">Kampresultater – Gruppespill</div><div className="card-sub">Legg inn de faktiske kampresultatene.</div><GroupResultsPanel results={results} setResults={setResults} commit={commit}/></div>}
+            {panel==='knockout'&&<div className="card"><div className="card-title">Sluttspillresultater</div><div className="card-sub">Legg inn faktiske vinnere runde for runde.</div><KnockoutResultsPanel results={results} setResults={setResults} commit={commit}/></div>}
+            {panel==='awards'&&<div className="card"><div className="card-title">Standouts</div><div className="card-sub">Faktisk toppscorer og topp-assist.</div><AwardsPanel results={results} setResults={setResults} commit={commit}/></div>}
             {panel==='users'&&<div className="card"><div className="card-title">Deltakere og tippinger</div><div className="card-sub">Klikk på en deltaker for full oppsummering med poengscore.</div><UsersPanel results={results}/></div>}
           </div>
         </div>

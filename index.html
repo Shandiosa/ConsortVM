@@ -10,7 +10,10 @@
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 <script src="data.js"></script>
+<script src="players.js"></script>
 <style>
+@font-face{font-family:"TwemojiFlags";unicode-range:U+1F1E6-1F1FF,U+1F3F4,U+E0062-E0063,U+E0065,U+E0067,U+E006C,U+E006E,U+E0073-E0074,U+E0077,U+E007F;src:url('https://cdn.jsdelivr.net/npm/country-flag-emoji-polyfill@0.1/dist/TwemojiCountryFlags.woff2') format('woff2');font-display:swap;}
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   --bg:#070d18;--surface:#0d1826;--card:#122030;--elevated:#19304a;
@@ -19,7 +22,7 @@
   --border:rgba(255,255,255,.07);--gold:#ffd700;--red:#ff4f5e;
   --r:12px;
 }
-html,body{height:100%;background:var(--bg);color:var(--txt);font-family:'Barlow',sans-serif;font-size:16px;line-height:1.5;}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:"TwemojiFlags",'Barlow',sans-serif;font-size:16px;line-height:1.5;}
 body{background-image:repeating-linear-gradient(0deg,transparent,transparent 59px,rgba(255,255,255,.018) 59px,rgba(255,255,255,.018) 60px),repeating-linear-gradient(90deg,transparent,transparent 59px,rgba(255,255,255,.018) 59px,rgba(255,255,255,.018) 60px);}
 
 /* Layout */
@@ -183,7 +186,7 @@ const {useState, useEffect, useCallback, useRef} = React;
 
 // ── Storage helpers ─────────────────────────────────────────────────────────
 const SUPABASE_URL = 'https://pwqdgulwrddltujjefme.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_vYR_FWX8bZB-K5y3yfaq8Q_nr47ZFZI';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3cWRndWx3cmRkbHR1amplZm1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3OTQ0NjgsImV4cCI6MjA5MjM3MDQ2OH0.H9f_cprE1SWJK5l76gBAPzfvsmMjtXGkE7D3E7vPkMA';
 const LS_USER = 'vm26_user';
 const LS_TIP  = 'vm26_tipping';
 
@@ -191,9 +194,12 @@ function lsGet(key) { try { return JSON.parse(localStorage.getItem(key)); } catc
 function lsSet(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
 
 async function upsertTipping(data) {
-  if (!SUPABASE_URL || !SUPABASE_KEY) return;
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    console.warn('Supabase ikke konfigurert – lagrer kun lokalt');
+    return;
+  }
   try {
-    await fetch(`${SUPABASE_URL}/rest/v1/tippinger`, {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/tippinger`, {
       method: 'POST',
       headers: {
         'apikey': SUPABASE_KEY,
@@ -203,7 +209,13 @@ async function upsertTipping(data) {
       },
       body: JSON.stringify({ email: data.user.email, navn: data.user.name, data, levert_tid: new Date().toISOString() }),
     });
-  } catch(e) { console.warn('Supabase feil:', e); }
+    if (!res.ok) {
+      const errText = await res.text();
+      console.error('Supabase feil', res.status, errText);
+    } else {
+      console.log('Tipping lagret i Supabase OK');
+    }
+  } catch(e) { console.error('Supabase nettverksfeil:', e); }
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -275,6 +287,7 @@ function RegistrationStep({ onDone }) {
   function submit() {
     if (!name.trim()) { setErr('Skriv inn navn.'); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setErr('Ugyldig e-postadresse.'); return; }
+    if (!email.toLowerCase().includes('consort')) { setErr('Bruk en Consort-epostadresse (f.eks. navn@consort.no).'); return; }
     onDone({ name: name.trim(), email: email.trim().toLowerCase() });
   }
 
@@ -303,7 +316,7 @@ function RegistrationStep({ onDone }) {
 }
 
 // ── Step 2: Group tipping ────────────────────────────────────────────────────
-function GroupStep({ groupScores, setGroupScores, onNext, onBack }) {
+function GroupStep({ groupScores, setGroupScores, onScoreChange, onNext, onBack }) {
   const [activeGroup, setActiveGroup] = useState('A');
 
   const groupIds = Object.keys(GROUPS);
@@ -318,10 +331,14 @@ function GroupStep({ groupScores, setGroupScores, onNext, onBack }) {
   function allFilled() { return groupIds.every(isGroupFilled); }
 
   function setScore(gameId, side, val) {
-    setGroupScores(prev => {
-      const updated = { ...prev, [gameId]: { ...(prev[gameId] || {}), [side]: val } };
-      return updated;
-    });
+    if (onScoreChange) {
+      onScoreChange(gameId, side, val);
+    } else {
+      setGroupScores(prev => {
+        const updated = { ...prev, [gameId]: { ...(prev[gameId] || {}), [side]: val } };
+        return updated;
+      });
+    }
   }
 
   const games = GROUP_GAMES[activeGroup];
@@ -556,210 +573,6 @@ function KnockoutStep({ groupScores, thirdPlace, picks, setPicks, onNext, onBack
   );
 }
 
-// ── Player database ──────────────────────────────────────────────────────────
-const PLAYERS = [
-  // Norge (I)
-  { name: 'Erling Haaland', team: 'NOR', flag: '🇳🇴', info: 'Manchester City' },
-  { name: 'Martin Ødegaard', team: 'NOR', flag: '🇳🇴', info: 'Arsenal' },
-  { name: 'Alexander Sørloth', team: 'NOR', flag: '🇳🇴', info: 'Atlético Madrid' },
-  { name: 'Antonio Nusa', team: 'NOR', flag: '🇳🇴', info: 'RB Leipzig' },
-  { name: 'Sander Berge', team: 'NOR', flag: '🇳🇴', info: 'Fulham' },
-  // Argentina (J)
-  { name: 'Lionel Messi', team: 'ARG', flag: '🇦🇷', info: 'Inter Miami' },
-  { name: 'Lautaro Martínez', team: 'ARG', flag: '🇦🇷', info: 'Inter' },
-  { name: 'Julián Álvarez', team: 'ARG', flag: '🇦🇷', info: 'Atlético Madrid' },
-  { name: 'Alejandro Garnacho', team: 'ARG', flag: '🇦🇷', info: 'Manchester United' },
-  { name: 'Paulo Dybala', team: 'ARG', flag: '🇦🇷', info: 'Roma' },
-  { name: 'Ángel Di María', team: 'ARG', flag: '🇦🇷', info: 'Benfica' },
-  { name: 'Rodrigo De Paul', team: 'ARG', flag: '🇦🇷', info: 'Atlético Madrid' },
-  // Brasil (C)
-  { name: 'Vinicius Jr.', team: 'BRA', flag: '🇧🇷', info: 'Real Madrid' },
-  { name: 'Rodrygo', team: 'BRA', flag: '🇧🇷', info: 'Real Madrid' },
-  { name: 'Raphinha', team: 'BRA', flag: '🇧🇷', info: 'Barcelona' },
-  { name: 'Endrick', team: 'BRA', flag: '🇧🇷', info: 'Real Madrid' },
-  { name: 'Gabriel Martinelli', team: 'BRA', flag: '🇧🇷', info: 'Arsenal' },
-  { name: 'Lucas Paquetá', team: 'BRA', flag: '🇧🇷', info: 'West Ham' },
-  { name: 'Richarlison', team: 'BRA', flag: '🇧🇷', info: 'Tottenham' },
-  { name: 'Gabriel Jesus', team: 'BRA', flag: '🇧🇷', info: 'Arsenal' },
-  // Frankrike (I)
-  { name: 'Kylian Mbappé', team: 'FRA', flag: '🇫🇷', info: 'Real Madrid' },
-  { name: 'Antoine Griezmann', team: 'FRA', flag: '🇫🇷', info: 'Atlético Madrid' },
-  { name: 'Ousmane Dembélé', team: 'FRA', flag: '🇫🇷', info: 'Paris Saint-Germain' },
-  { name: 'Marcus Thuram', team: 'FRA', flag: '🇫🇷', info: 'Inter' },
-  { name: 'Randal Kolo Muani', team: 'FRA', flag: '🇫🇷', info: 'Juventus' },
-  { name: 'Bradley Barcola', team: 'FRA', flag: '🇫🇷', info: 'Paris Saint-Germain' },
-  { name: 'Aurélien Tchouaméni', team: 'FRA', flag: '🇫🇷', info: 'Real Madrid' },
-  // England (L)
-  { name: 'Harry Kane', team: 'ENG', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', info: 'Bayern München' },
-  { name: 'Phil Foden', team: 'ENG', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', info: 'Manchester City' },
-  { name: 'Jude Bellingham', team: 'ENG', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', info: 'Real Madrid' },
-  { name: 'Bukayo Saka', team: 'ENG', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', info: 'Arsenal' },
-  { name: 'Marcus Rashford', team: 'ENG', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', info: 'Manchester United' },
-  { name: 'Cole Palmer', team: 'ENG', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', info: 'Chelsea' },
-  { name: 'Ollie Watkins', team: 'ENG', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', info: 'Aston Villa' },
-  { name: 'Declan Rice', team: 'ENG', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', info: 'Arsenal' },
-  // Spania (H)
-  { name: 'Álvaro Morata', team: 'ESP', flag: '🇪🇸', info: 'Atlético Madrid' },
-  { name: 'Pedri', team: 'ESP', flag: '🇪🇸', info: 'Barcelona' },
-  { name: 'Lamine Yamal', team: 'ESP', flag: '🇪🇸', info: 'Barcelona' },
-  { name: 'Nico Williams', team: 'ESP', flag: '🇪🇸', info: 'Athletic Club' },
-  { name: 'Dani Olmo', team: 'ESP', flag: '🇪🇸', info: 'Barcelona' },
-  { name: 'Ferran Torres', team: 'ESP', flag: '🇪🇸', info: 'Barcelona' },
-  { name: 'Mikel Oyarzabal', team: 'ESP', flag: '🇪🇸', info: 'Real Sociedad' },
-  // Portugal (K)
-  { name: 'Cristiano Ronaldo', team: 'POR', flag: '🇵🇹', info: 'Al Nassr' },
-  { name: 'Bruno Fernandes', team: 'POR', flag: '🇵🇹', info: 'Manchester United' },
-  { name: 'Rafael Leão', team: 'POR', flag: '🇵🇹', info: 'AC Milan' },
-  { name: 'Bernardo Silva', team: 'POR', flag: '🇵🇹', info: 'Manchester City' },
-  { name: 'João Félix', team: 'POR', flag: '🇵🇹', info: 'Chelsea' },
-  { name: 'Gonçalo Ramos', team: 'POR', flag: '🇵🇹', info: 'Paris Saint-Germain' },
-  { name: 'Pedro Neto', team: 'POR', flag: '🇵🇹', info: 'Chelsea' },
-  // Tyskland (E)
-  { name: 'Florian Wirtz', team: 'GER', flag: '🇩🇪', info: 'Bayer Leverkusen' },
-  { name: 'Jamal Musiala', team: 'GER', flag: '🇩🇪', info: 'Bayern München' },
-  { name: 'Kai Havertz', team: 'GER', flag: '🇩🇪', info: 'Arsenal' },
-  { name: 'Leroy Sané', team: 'GER', flag: '🇩🇪', info: 'Bayern München' },
-  { name: 'Thomas Müller', team: 'GER', flag: '🇩🇪', info: 'Bayern München' },
-  { name: 'Niclas Füllkrug', team: 'GER', flag: '🇩🇪', info: 'West Ham' },
-  { name: 'Serge Gnabry', team: 'GER', flag: '🇩🇪', info: 'Bayern München' },
-  // Nederland (F)
-  { name: 'Virgil van Dijk', team: 'NED', flag: '🇳🇱', info: 'Liverpool' },
-  { name: 'Memphis Depay', team: 'NED', flag: '🇳🇱', info: 'Corinthians' },
-  { name: 'Cody Gakpo', team: 'NED', flag: '🇳🇱', info: 'Liverpool' },
-  { name: 'Xavi Simons', team: 'NED', flag: '🇳🇱', info: 'RB Leipzig' },
-  { name: 'Donyell Malen', team: 'NED', flag: '🇳🇱', info: 'Dortmund' },
-  { name: 'Wout Weghorst', team: 'NED', flag: '🇳🇱', info: 'Hoffenheim' },
-  // Belgia (G)
-  { name: 'Kevin De Bruyne', team: 'BEL', flag: '🇧🇪', info: 'Manchester City' },
-  { name: 'Romelu Lukaku', team: 'BEL', flag: '🇧🇪', info: 'Napoli' },
-  { name: 'Dries Mertens', team: 'BEL', flag: '🇧🇪', info: 'Galatasaray' },
-  { name: 'Leandro Trossard', team: 'BEL', flag: '🇧🇪', info: 'Arsenal' },
-  { name: 'Yannick Carrasco', team: 'BEL', flag: '🇧🇪', info: 'Al-Qadsiah' },
-  { name: 'Lois Openda', team: 'BEL', flag: '🇧🇪', info: 'RB Leipzig' },
-  // USA (D)
-  { name: 'Christian Pulisic', team: 'USA', flag: '🇺🇸', info: 'AC Milan' },
-  { name: 'Gio Reyna', team: 'USA', flag: '🇺🇸', info: 'Nottingham Forest' },
-  { name: 'Ricardo Pepi', team: 'USA', flag: '🇺🇸', info: 'PSV Eindhoven' },
-  { name: 'Weston McKennie', team: 'USA', flag: '🇺🇸', info: 'Juventus' },
-  { name: 'Folarin Balogun', team: 'USA', flag: '🇺🇸', info: 'Monaco' },
-  { name: 'Timothy Weah', team: 'USA', flag: '🇺🇸', info: 'Juventus' },
-  // Mexico (A)
-  { name: 'Hirving Lozano', team: 'MEX', flag: '🇲🇽', info: 'PSV Eindhoven' },
-  { name: 'Raúl Jiménez', team: 'MEX', flag: '🇲🇽', info: 'Fulham' },
-  { name: 'Henry Martín', team: 'MEX', flag: '🇲🇽', info: 'Club América' },
-  { name: 'Edson Álvarez', team: 'MEX', flag: '🇲🇽', info: 'West Ham' },
-  // Japan (F)
-  { name: 'Takumi Minamino', team: 'JPN', flag: '🇯🇵', info: 'AS Monaco' },
-  { name: 'Kaoru Mitoma', team: 'JPN', flag: '🇯🇵', info: 'Brighton' },
-  { name: 'Daichi Kamada', team: 'JPN', flag: '🇯🇵', info: 'Crystal Palace' },
-  { name: 'Ritsu Doan', team: 'JPN', flag: '🇯🇵', info: 'SC Freiburg' },
-  { name: 'Ayase Ueda', team: 'JPN', flag: '🇯🇵', info: 'Feyenoord' },
-  // Marokko (C)
-  { name: 'Hakim Ziyech', team: 'MAR', flag: '🇲🇦', info: 'Galatasaray' },
-  { name: 'Achraf Hakimi', team: 'MAR', flag: '🇲🇦', info: 'Paris Saint-Germain' },
-  { name: 'Youssef En-Nesyri', team: 'MAR', flag: '🇲🇦', info: 'Fenerbahçe' },
-  { name: 'Sofiane Boufal', team: 'MAR', flag: '🇲🇦', info: 'Angers' },
-  // Senegal (I)
-  { name: 'Sadio Mané', team: 'SEN', flag: '🇸🇳', info: 'Al Nassr' },
-  { name: 'Ismaïla Sarr', team: 'SEN', flag: '🇸🇳', info: 'Crystal Palace' },
-  { name: 'Iliman Ndiaye', team: 'SEN', flag: '🇸🇳', info: 'Everton' },
-  // Uruguay (H)
-  { name: 'Darwin Núñez', team: 'URU', flag: '🇺🇾', info: 'Liverpool' },
-  { name: 'Federico Valverde', team: 'URU', flag: '🇺🇾', info: 'Real Madrid' },
-  { name: 'Luis Suárez', team: 'URU', flag: '🇺🇾', info: 'Internacional' },
-  { name: 'Facundo Pellistri', team: 'URU', flag: '🇺🇾', info: 'Manchester United' },
-  // Colombia (K)
-  { name: 'Luis Díaz', team: 'COL', flag: '🇨🇴', info: 'Liverpool' },
-  { name: 'James Rodríguez', team: 'COL', flag: '🇨🇴', info: 'Rayo Vallecano' },
-  { name: 'Jhon Durán', team: 'COL', flag: '🇨🇴', info: 'Aston Villa' },
-  { name: 'Cucho Hernández', team: 'COL', flag: '🇨🇴', info: 'Columbus Crew' },
-  // Ecuador (E)
-  { name: 'Moisés Caicedo', team: 'ECU', flag: '🇪🇨', info: 'Chelsea' },
-  { name: 'Enner Valencia', team: 'ECU', flag: '🇪🇨', info: 'Internacional' },
-  { name: 'Jeremy Sarmiento', team: 'ECU', flag: '🇪🇨', info: 'Brighton' },
-  // Australia (D)
-  { name: 'Mat Ryan', team: 'AUS', flag: '🇦🇺', info: 'Real Sociedad' },
-  { name: 'Mitchell Duke', team: 'AUS', flag: '🇦🇺', info: 'Macarthur FC' },
-  { name: 'Martin Boyle', team: 'AUS', flag: '🇦🇺', info: 'Panathinaikos' },
-  // Kroatia (L)
-  { name: 'Luka Modrić', team: 'CRO', flag: '🇭🇷', info: 'Real Madrid' },
-  { name: 'Ivan Perišić', team: 'CRO', flag: '🇭🇷', info: 'Hajduk Split' },
-  { name: 'Ante Budimir', team: 'CRO', flag: '🇭🇷', info: 'Osasuna' },
-  { name: 'Mateo Kovačić', team: 'CRO', flag: '🇭🇷', info: 'Manchester City' },
-  // Sveits (B)
-  { name: 'Granit Xhaka', team: 'SUI', flag: '🇨🇭', info: 'Bayer Leverkusen' },
-  { name: 'Xherdan Shaqiri', team: 'SUI', flag: '🇨🇭', info: 'Chicago Fire' },
-  { name: 'Breel Embolo', team: 'SUI', flag: '🇨🇭', info: 'Monaco' },
-  { name: 'Ruben Vargas', team: 'SUI', flag: '🇨🇭', info: 'Augsburg' },
-  // Tyrkia (D)
-  { name: 'Hakan Çalhanoğlu', team: 'TUR', flag: '🇹🇷', info: 'Inter' },
-  { name: 'Arda Güler', team: 'TUR', flag: '🇹🇷', info: 'Real Madrid' },
-  { name: 'Kerem Aktürkoğlu', team: 'TUR', flag: '🇹🇷', info: 'Galatasaray' },
-  { name: 'Cenk Tosun', team: 'TUR', flag: '🇹🇷', info: 'Beşiktaş' },
-  // Canada (B)
-  { name: 'Alphonso Davies', team: 'CAN', flag: '🇨🇦', info: 'Bayern München' },
-  { name: 'Jonathan David', team: 'CAN', flag: '🇨🇦', info: 'Lille' },
-  { name: 'Cyle Larin', team: 'CAN', flag: '🇨🇦', info: 'Club Brugge' },
-  { name: 'Tajon Buchanan', team: 'CAN', flag: '🇨🇦', info: 'Inter' },
-  // Sør-Korea (A)
-  { name: 'Son Heung-min', team: 'KOR', flag: '🇰🇷', info: 'Tottenham' },
-  { name: 'Lee Kang-in', team: 'KOR', flag: '🇰🇷', info: 'Paris Saint-Germain' },
-  { name: 'Hwang Hee-chan', team: 'KOR', flag: '🇰🇷', info: 'Wolverhampton' },
-  // Ghana (L)
-  { name: 'Jordan Ayew', team: 'GHA', flag: '🇬🇭', info: 'Leicester City' },
-  { name: 'André Ayew', team: 'GHA', flag: '🇬🇭', info: 'Le Havre' },
-  { name: 'Mohammed Kudus', team: 'GHA', flag: '🇬🇭', info: 'West Ham' },
-  // Østerrike (J)
-  { name: 'Marcel Sabitzer', team: 'AUT', flag: '🇦🇹', info: 'Dortmund' },
-  { name: 'Marko Arnautović', team: 'AUT', flag: '🇦🇹', info: 'Inter' },
-  { name: 'David Alaba', team: 'AUT', flag: '🇦🇹', info: 'Real Madrid' },
-  // Sverige (F)
-  { name: 'Viktor Gyökeres', team: 'SWE', flag: '🇸🇪', info: 'Sporting CP' },
-  { name: 'Alexander Isak', team: 'SWE', flag: '🇸🇪', info: 'Newcastle' },
-  { name: 'Dejan Kulusevski', team: 'SWE', flag: '🇸🇪', info: 'Tottenham' },
-  { name: 'Emil Forsberg', team: 'SWE', flag: '🇸🇪', info: 'RB Leipzig' },
-  // Saudi-Arabia (H)
-  { name: 'Salem Al-Dawsari', team: 'KSA', flag: '🇸🇦', info: 'Al-Hilal' },
-  { name: 'Mohammed Al-Owais', team: 'KSA', flag: '🇸🇦', info: 'Al-Hilal' },
-  // Egypt (G)
-  { name: 'Mohamed Salah', team: 'EGY', flag: '🇪🇬', info: 'Liverpool' },
-  { name: 'Trezeguet', team: 'EGY', flag: '🇪🇬', info: 'Trabzonspor' },
-  // Iran (G)
-  { name: 'Mehdi Taremi', team: 'IRN', flag: '🇮🇷', info: 'Inter' },
-  { name: 'Sardar Azmoun', team: 'IRN', flag: '🇮🇷', info: 'Roma' },
-  // Skottland (C)
-  { name: 'Scott McTominay', team: 'SCO', flag: '🏴󠁧󠁢󠁳󠁣󠁴󠁿', info: 'Napoli' },
-  { name: 'Andy Robertson', team: 'SCO', flag: '🏴󠁧󠁢󠁳󠁣󠁴󠁿', info: 'Liverpool' },
-  { name: 'Che Adams', team: 'SCO', flag: '🏴󠁧󠁢󠁳󠁣󠁴󠁿', info: 'Torino' },
-];
-
-// Fuzzy search: score a player against a query
-function fuzzyScore(player, query) {
-  const q = query.toLowerCase().trim();
-  const n = player.name.toLowerCase();
-  const parts = n.split(' ');
-  if (n.startsWith(q)) return 100;
-  if (parts.some(p => p.startsWith(q))) return 90;
-  if (n.includes(q)) return 80;
-  // Check each word of query against name
-  const words = q.split(' ').filter(Boolean);
-  if (words.length > 1 && words.every(w => n.includes(w))) return 70;
-  // Partial match on any part
-  if (parts.some(p => p.includes(q))) return 60;
-  // Check first letters of each word
-  const initials = parts.map(p=>p[0]).join('');
-  if (initials.includes(q)) return 40;
-  return 0;
-}
-
-function searchPlayers(query) {
-  if (!query || query.trim().length < 1) return [];
-  const scored = PLAYERS.map(p => ({ ...p, score: fuzzyScore(p, query) }))
-    .filter(p => p.score > 0)
-    .sort((a,b) => b.score - a.score);
-  return scored.slice(0, 7);
-}
-
 // ── PlayerAutocomplete ────────────────────────────────────────────────────────
 function PlayerAutocomplete({ value, onChange, placeholder, id }) {
   const [open, setOpen] = useState(false);
@@ -845,7 +658,7 @@ function AwardsStep({ topScorer, setTopScorer, topAssist, setTopAssist, onNext, 
           <div className="award-body">
             <div className="award-label">Toppscorer</div>
             <div className="award-desc">Spilleren med flest mål i VM 2026</div>
-            <div className="award-pts">+2 poeng</div>
+            <div className="award-pts">+4 poeng</div>
             <PlayerAutocomplete
               id="scorer"
               value={topScorer}
@@ -860,7 +673,7 @@ function AwardsStep({ topScorer, setTopScorer, topAssist, setTopAssist, onNext, 
           <div className="award-body">
             <div className="award-label">Flest assist</div>
             <div className="award-desc">Spilleren med flest assist i VM 2026</div>
-            <div className="award-pts">+2 poeng</div>
+            <div className="award-pts">+3 poeng</div>
             <PlayerAutocomplete
               id="assist"
               value={topAssist}
@@ -1010,7 +823,50 @@ function App() {
   const deadline = TIPPING_DEADLINE;
   const pastDeadline = new Date() > deadline;
 
+  // Score change handler: also cascades knockout pick invalidation when standings shift
+  function updateGroupScore(gameId, side, val) {
+    const game = ALL_GAMES.find(g => g.id === gameId);
+    if (game) {
+      const grp = game.group;
+      const newScores = { ...groupScores, [gameId]: { ...(groupScores[gameId] || {}), [side]: val } };
+      const oldTop2 = calcStandings(grp, groupScores).slice(0, 2).map(r => r.team);
+      const newTop2 = calcStandings(grp, newScores).slice(0, 2).map(r => r.team);
+      if (oldTop2[0] !== newTop2[0] || oldTop2[1] !== newTop2[1]) {
+        const changed = new Set();
+        if (oldTop2[0] !== newTop2[0]) changed.add(`1${grp}`);
+        if (oldTop2[1] !== newTop2[1]) changed.add(`2${grp}`);
+        setPicks(prev => {
+          const p = { ...prev };
+          R32.forEach(m32 => {
+            if (!changed.has(m32.home) && !changed.has(m32.away)) return;
+            delete p[m32.id];
+            R16.forEach(m16 => {
+              if (!m16.prev?.includes(m32.id)) return;
+              delete p[m16.id];
+              QF.forEach(mQF => {
+                if (!mQF.prev?.includes(m16.id)) return;
+                delete p[mQF.id];
+                SF.forEach(mSF => {
+                  if (!mSF.prev?.includes(mQF.id)) return;
+                  delete p[mSF.id];
+                  delete p['BRONZE'];
+                  delete p['FINAL'];
+                });
+              });
+            });
+          });
+          return p;
+        });
+      }
+    }
+    setGroupScores(prev => ({ ...prev, [gameId]: { ...(prev[gameId] || {}), [side]: val } }));
+  }
+
   async function handleSubmit() {
+    if (new Date() > TIPPING_DEADLINE) {
+      alert('Fristen har gått ut (10. juni kl. 16:00). Det er ikke lenger mulig å levere tipping.');
+      return;
+    }
     setSubmitting(true);
     const tipping = { user, groupScores, thirdPlace, knockoutPicks: picks, topScorer, topAssist, submittedAt: new Date().toISOString() };
     // Save to shared localStorage list so admin can see it (fallback when no Google Sheets)
@@ -1046,8 +902,16 @@ function App() {
           </div>
         )}
 
-        {step === 0 && <RegistrationStep onDone={u=>{setUser(u);setStep(1);}}/>}
-        {step === 1 && <GroupStep groupScores={groupScores} setGroupScores={setGroupScores} onNext={()=>setStep(2)} onBack={()=>setStep(0)}/>}
+        {step === 0 && !pastDeadline && <RegistrationStep onDone={u=>{setUser(u);setStep(1);}}/>}
+        {step === 0 && pastDeadline && (
+          <div className="card" style={{textAlign:'center',padding:'48px 28px'}}>
+            <div style={{fontSize:52,marginBottom:16}}>⏰</div>
+            <div className="section-title" style={{color:'var(--red)',marginBottom:8}}>Fristen er utløpt</div>
+            <div className="section-sub">Tippingsfristen var 10. juni kl. 16:00. Det er ikke lenger mulig å levere.</div>
+            <div style={{marginTop:24}}><a href="leaderboard.html" className="btn btn-primary">📊 Se resultattabellen →</a></div>
+          </div>
+        )}
+        {step === 1 && <GroupStep groupScores={groupScores} setGroupScores={setGroupScores} onScoreChange={updateGroupScore} onNext={()=>setStep(2)} onBack={()=>setStep(0)}/>}
         {step === 2 && <ThirdPlaceStep groupScores={groupScores} thirdPlace={thirdPlace} setThirdPlace={setThirdPlace} onNext={()=>setStep(3)} onBack={()=>setStep(1)}/>}
         {step === 3 && <KnockoutStep groupScores={groupScores} thirdPlace={thirdPlace} picks={picks} setPicks={setPicks} onNext={()=>setStep(4)} onBack={()=>setStep(2)}/>}
         {step === 4 && <AwardsStep topScorer={topScorer} setTopScorer={setTopScorer} topAssist={topAssist} setTopAssist={setTopAssist} onNext={()=>setStep(5)} onBack={()=>setStep(3)}/>}
