@@ -158,9 +158,9 @@ function calcStandings(groupId, scores) {
     else            { s[game.home].pts += 1; s[game.away].pts += 1; }
   });
   return [...teams].sort((a, b) =>
-    b.pts !== a.pts ? s[b].pts - s[a].pts :
-    b.gd  !== a.gd  ? s[b].gd  - s[a].gd  :
-                      s[b].gf  - s[a].gf
+    s[b].pts !== s[a].pts ? s[b].pts - s[a].pts :
+    s[b].gd  !== s[a].gd  ? s[b].gd  - s[a].gd  :
+                            s[b].gf  - s[a].gf
   ).map(t => ({ team: t, ...s[t] }));
 }
 
