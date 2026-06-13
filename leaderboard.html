@@ -191,10 +191,12 @@ function scoreBreakdown(tipping, adminResults) {
 
   ['R32','R16','QF','SF'].forEach(rk => {
     const matches = {R32,R16,QF,SF}[rk];
+    const real = new Set(matches.map(m=>adminResults.knockoutResults?.[m.id]).filter(Boolean));
+    const counted = new Set();
     let pts = 0;
     matches.forEach(m => {
-      const uP=tipping.knockoutPicks?.[m.id], rP=adminResults.knockoutResults?.[m.id];
-      if(uP&&rP&&uP===rP) pts+=2;
+      const t = tipping.knockoutPicks?.[m.id];
+      if(t && real.has(t) && !counted.has(t)){ counted.add(t); pts+=2; }
     });
     detail.knockout[rk] = pts;
   });

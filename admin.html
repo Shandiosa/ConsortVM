@@ -488,7 +488,7 @@ function KnockoutResultsPanel({results, setResults, commit}) {
         const won=picks[match.id];
         return(
           <div key={match.id} className="ko-match">
-            <div className="ko-match-label">{ROUND_LABELS[activeRound]} · Kamp {idx+1}{match.loser?' (3.plass)':''}</div>
+            <div className="ko-match-label">{ROUND_LABELS[activeRound]} · Kamp {match.num || (idx+1)}{match.loser?' (3.plass)':''}</div>
             {[tA,tB].map((team,ti)=>{
               const isTbd=!team,isPicked=won===team&&!isTbd,isStaged=staged[match.id]===team&&!isTbd;
               return(
@@ -537,9 +537,11 @@ function getBreakdown(tipping, adminResults) {
   });
   ['R32','R16','QF','SF'].forEach(rk=>{
     const ms={R32,R16,QF,SF}[rk];
+    const real=new Set(ms.map(m=>adminResults.knockoutResults?.[m.id]).filter(Boolean));
+    const counted=new Set();
     ms.forEach(m=>{
-      const uP=tipping.knockoutPicks?.[m.id],rP=adminResults.knockoutResults?.[m.id];
-      if(uP&&rP&&uP===rP) bd.knockout[rk]+=2;
+      const t=tipping.knockoutPicks?.[m.id];
+      if(t && real.has(t) && !counted.has(t)){ counted.add(t); bd.knockout[rk]+=2; }
     });
   });
   const rF=[adminResults.knockoutResults?.['SF_1'],adminResults.knockoutResults?.['SF_2']].filter(Boolean);

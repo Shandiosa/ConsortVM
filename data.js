@@ -81,52 +81,66 @@ const GROUP_GAMES = {};
 Object.keys(GROUPS).forEach(g => { GROUP_GAMES[g] = generateGroupGames(g); });
 const ALL_GAMES = Object.values(GROUP_GAMES).flat();
 
-// Knockout bracket structure
-// R32: 16 matches. Slots: '1X' = group X winner, '2X' = runner-up, '3P_N' = Nth best 3rd-place
+// Knockout bracket structure — OFFICIAL FIFA World Cup 2026 layout (matches M73–M104).
+// Slots: '1X' = group X winner, '2X' = group X runner-up, 'T_<matchId>' = best-third slot
+// whose eligible groups are defined in THIRD_SLOT_ORDER below (FIFA Annex C clusters).
 const R32 = [
-  { id: 'R32_1',  home: '1A', away: '3P_1' },
-  { id: 'R32_2',  home: '1B', away: '2A'   },
-  { id: 'R32_3',  home: '1C', away: '3P_2' },
-  { id: 'R32_4',  home: '1D', away: '2C'   },
-  { id: 'R32_5',  home: '1E', away: '3P_3' },
-  { id: 'R32_6',  home: '1F', away: '2E'   },
-  { id: 'R32_7',  home: '2B', away: '3P_4' },
-  { id: 'R32_8',  home: '2D', away: '2F'   },
-  { id: 'R32_9',  home: '1G', away: '3P_5' },
-  { id: 'R32_10', home: '1H', away: '2G'   },
-  { id: 'R32_11', home: '1I', away: '3P_6' },
-  { id: 'R32_12', home: '1J', away: '2I'   },
-  { id: 'R32_13', home: '1K', away: '3P_7' },
-  { id: 'R32_14', home: '1L', away: '2K'   },
-  { id: 'R32_15', home: '2H', away: '3P_8' },
-  { id: 'R32_16', home: '2J', away: '2L'   },
+  { id: 'R32_1',  num: 73, home: '2A', away: '2B'       },
+  { id: 'R32_2',  num: 74, home: '1E', away: 'T_R32_2'  }, // 3rd: A/B/C/D/F
+  { id: 'R32_3',  num: 75, home: '1F', away: '2C'       },
+  { id: 'R32_4',  num: 76, home: '1C', away: '2F'       },
+  { id: 'R32_5',  num: 77, home: '1I', away: 'T_R32_5'  }, // 3rd: C/D/F/G/H
+  { id: 'R32_6',  num: 78, home: '2E', away: '2I'       },
+  { id: 'R32_7',  num: 79, home: '1A', away: 'T_R32_7'  }, // 3rd: C/E/F/H/I
+  { id: 'R32_8',  num: 80, home: '1L', away: 'T_R32_8'  }, // 3rd: E/H/I/J/K
+  { id: 'R32_9',  num: 81, home: '1D', away: 'T_R32_9'  }, // 3rd: B/E/F/I/J
+  { id: 'R32_10', num: 82, home: '1G', away: 'T_R32_10' }, // 3rd: A/E/H/I/J
+  { id: 'R32_11', num: 83, home: '2K', away: '2L'       },
+  { id: 'R32_12', num: 84, home: '1H', away: '2J'       },
+  { id: 'R32_13', num: 85, home: '1B', away: 'T_R32_13' }, // 3rd: E/F/G/I/J
+  { id: 'R32_14', num: 86, home: '1J', away: '2H'       },
+  { id: 'R32_15', num: 87, home: '1K', away: 'T_R32_15' }, // 3rd: D/E/I/J/L
+  { id: 'R32_16', num: 88, home: '2D', away: '2G'       },
+];
+
+// The 8 best-third slots, with the groups each slot may draw from (FIFA official).
+// Order matters for the assignment tie-break (alphabetical, as FIFA publishes).
+const THIRD_SLOT_ORDER = [
+  { match: 'R32_2',  groups: ['A', 'B', 'C', 'D', 'F'] },
+  { match: 'R32_5',  groups: ['C', 'D', 'F', 'G', 'H'] },
+  { match: 'R32_7',  groups: ['C', 'E', 'F', 'H', 'I'] },
+  { match: 'R32_8',  groups: ['E', 'H', 'I', 'J', 'K'] },
+  { match: 'R32_9',  groups: ['B', 'E', 'F', 'I', 'J'] },
+  { match: 'R32_10', groups: ['A', 'E', 'H', 'I', 'J'] },
+  { match: 'R32_13', groups: ['E', 'F', 'G', 'I', 'J'] },
+  { match: 'R32_15', groups: ['D', 'E', 'I', 'J', 'L'] },
 ];
 
 const R16 = [
-  { id: 'R16_1', prev: ['R32_1',  'R32_2']  },
-  { id: 'R16_2', prev: ['R32_3',  'R32_4']  },
-  { id: 'R16_3', prev: ['R32_5',  'R32_6']  },
-  { id: 'R16_4', prev: ['R32_7',  'R32_8']  },
-  { id: 'R16_5', prev: ['R32_9',  'R32_10'] },
-  { id: 'R16_6', prev: ['R32_11', 'R32_12'] },
-  { id: 'R16_7', prev: ['R32_13', 'R32_14'] },
-  { id: 'R16_8', prev: ['R32_15', 'R32_16'] },
+  { id: 'R16_1', num: 89, prev: ['R32_2',  'R32_5']  }, // W74 v W77
+  { id: 'R16_2', num: 90, prev: ['R32_1',  'R32_3']  }, // W73 v W75
+  { id: 'R16_3', num: 91, prev: ['R32_4',  'R32_6']  }, // W76 v W78
+  { id: 'R16_4', num: 92, prev: ['R32_7',  'R32_8']  }, // W79 v W80
+  { id: 'R16_5', num: 93, prev: ['R32_11', 'R32_12'] }, // W83 v W84
+  { id: 'R16_6', num: 94, prev: ['R32_9',  'R32_10'] }, // W81 v W82
+  { id: 'R16_7', num: 95, prev: ['R32_14', 'R32_16'] }, // W86 v W88
+  { id: 'R16_8', num: 96, prev: ['R32_13', 'R32_15'] }, // W85 v W87
 ];
 
 const QF = [
-  { id: 'QF_1', prev: ['R16_1', 'R16_2'] },
-  { id: 'QF_2', prev: ['R16_3', 'R16_4'] },
-  { id: 'QF_3', prev: ['R16_5', 'R16_6'] },
-  { id: 'QF_4', prev: ['R16_7', 'R16_8'] },
+  { id: 'QF_1', num: 97,  prev: ['R16_1', 'R16_2'] }, // W89 v W90
+  { id: 'QF_2', num: 98,  prev: ['R16_5', 'R16_6'] }, // W93 v W94
+  { id: 'QF_3', num: 99,  prev: ['R16_3', 'R16_4'] }, // W91 v W92
+  { id: 'QF_4', num: 100, prev: ['R16_7', 'R16_8'] }, // W95 v W96
 ];
 
 const SF = [
-  { id: 'SF_1', prev: ['QF_1', 'QF_2'] },
-  { id: 'SF_2', prev: ['QF_3', 'QF_4'] },
+  { id: 'SF_1', num: 101, prev: ['QF_1', 'QF_2'] }, // W97 v W98
+  { id: 'SF_2', num: 102, prev: ['QF_3', 'QF_4'] }, // W99 v W100
 ];
 
-const BRONZE = { id: 'BRONZE', prev: ['SF_1', 'SF_2'], loser: true };
-const FINAL  = { id: 'FINAL',  prev: ['SF_1', 'SF_2'] };
+const BRONZE = { id: 'BRONZE', num: 103, prev: ['SF_1', 'SF_2'], loser: true };
+const FINAL  = { id: 'FINAL',  num: 104, prev: ['SF_1', 'SF_2'] };
 
 const KNOCKOUT_ROUNDS = [
   { key: 'R32',    label: 'Runde av 32', matches: R32,    isGroup: true },
@@ -174,17 +188,45 @@ function isGroupComplete(adminGroupScores, groupId) {
   return GROUP_GAMES[groupId].every(g => isGamePlayed(adminGroupScores, g.id));
 }
 
+// Assign the 8 qualifying third-placed teams to their R32 slots, respecting FIFA's
+// eligible-group clusters (THIRD_SLOT_ORDER). Returns a map { matchId: groupLetter }.
+// Uses bipartite matching (augmenting paths) so a complete, valid assignment is always
+// found when one exists — and a third can never be placed against a winner it could not
+// face in reality (the clusters already exclude same-group rematches).
+function assignThirdSlots(thirdPlace) {
+  const qualGroups = (thirdPlace || []).map(c => TEAMS[c]?.group).filter(Boolean);
+  const slots = THIRD_SLOT_ORDER;
+  const groupToSlot = {}; // groupLetter -> slot index currently holding it
+
+  function augment(slotIdx, visited) {
+    for (const g of slots[slotIdx].groups) {
+      if (!qualGroups.includes(g) || visited.has(g)) continue;
+      visited.add(g);
+      if (groupToSlot[g] === undefined || augment(groupToSlot[g], visited)) {
+        groupToSlot[g] = slotIdx;
+        return true;
+      }
+    }
+    return false;
+  }
+  for (let i = 0; i < slots.length; i++) augment(i, new Set());
+
+  const result = {};
+  for (const g in groupToSlot) result[slots[groupToSlot[g]].match] = g;
+  return result;
+}
+
 // Resolve a bracket slot to a team code
 function resolveSlot(slot, groupStandings, thirdPlace, picks) {
   if (!slot) return null;
-  if (slot.startsWith('1')) return groupStandings[slot[1]]?.[0]?.team ?? null;
-  if (slot.startsWith('2')) return groupStandings[slot[1]]?.[1]?.team ?? null;
-  if (slot.startsWith('3P_')) {
-    const idx = parseInt(slot.replace('3P_', '')) - 1;
-    // Sort by group letter so slot assignment is deterministic regardless of selection order
-    const sorted = [...(thirdPlace || [])].sort((a, b) =>
-      (TEAMS[a]?.group || '').localeCompare(TEAMS[b]?.group || ''));
-    return sorted[idx] ?? null;
+  if (slot[0] === '1') return groupStandings[slot[1]]?.[0]?.team ?? null;
+  if (slot[0] === '2') return groupStandings[slot[1]]?.[1]?.team ?? null;
+  if (slot.startsWith('T_')) {
+    const matchId = slot.slice(2);
+    const assignment = assignThirdSlots(thirdPlace); // { matchId: groupLetter }
+    const grp = assignment[matchId];
+    if (!grp) return null;
+    return (thirdPlace || []).find(c => TEAMS[c]?.group === grp) ?? null;
   }
   return null;
 }
@@ -250,14 +292,19 @@ function calcScore(tipping, adminResults) {
     });
   });
 
-  // Knockout – 2 pts per correctly predicted advancing team per round
+  // Knockout – 2 pts per correctly predicted advancing team, per round.
+  // PAIRING-INDEPENDENT: compares the SET of teams the user advanced each round
+  // against the set that really advanced. This keeps every already-submitted
+  // bracket valid even though the official R32 pairings differ from the ones a
+  // tipper navigated — what counts is whether the teams they sent through are right.
   const rounds = ['R32', 'R16', 'QF', 'SF'];
   rounds.forEach(roundKey => {
     const matches = { R32, R16, QF, SF }[roundKey];
+    const realAdvanced = new Set(matches.map(m => adminKO[m.id]).filter(Boolean));
+    const counted = new Set();
     matches.forEach(match => {
-      const userPick = tipping.knockoutPicks?.[match.id];
-      const realPick = adminKO[match.id];
-      if (userPick && realPick && userPick === realPick) pts += 2;
+      const t = tipping.knockoutPicks?.[match.id];
+      if (t && realAdvanced.has(t) && !counted.has(t)) { counted.add(t); pts += 2; }
     });
   });
 

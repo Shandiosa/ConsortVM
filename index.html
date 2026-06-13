@@ -525,7 +525,7 @@ function KnockoutStep({ groupScores, thirdPlace, picks, setPicks, onNext, onBack
         {currentMatches.map((match, idx) => {
           const [teamA, teamB] = resolveMatchPair(match);
           const picked = picks[match.id];
-          const matchNum = activeRound==='R32' ? idx+1 : null;
+          const matchNum = match.num || (activeRound==='R32' ? idx+1 : null);
 
           return (
             <div key={match.id} className="ko-match">
