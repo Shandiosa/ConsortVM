@@ -65,21 +65,81 @@ const GROUPS = {
   L: ['ENG', 'CRO', 'GHA', 'PAN'],
 };
 
-// Generate all 6 games per group
+// Official group-stage match order — chronological by UTC kick-off (M1–M72).
+// Source: FIFA / Al Jazeera full schedule (June 11–27 / 28 2026).
+const GAME_MATCH_NUMS = {
+  'A_MEX_RSA':1, 'A_KOR_CZE':2,
+  'B_CAN_BIH':3, 'D_USA_PAR':4,
+  'B_QAT_SUI':5, 'C_BRA_MAR':6, 'C_HAI_SCO':7, 'D_AUS_TUR':8,
+  'E_GER_CUW':9, 'F_NED_JPN':10, 'E_CIV_ECU':11, 'F_SWE_TUN':12,
+  'H_ESP_CPV':13, 'G_BEL_EGY':14, 'H_KSA_URU':15, 'G_IRN_NZL':16,
+  'I_FRA_SEN':17, 'I_NOR_IRQ':18, 'J_ARG_ALG':19, 'J_AUT_JOR':20,
+  'K_POR_COD':21, 'L_ENG_CRO':22, 'L_GHA_PAN':23, 'K_UZB_COL':24,
+  'A_RSA_CZE':25, 'B_BIH_SUI':26, 'B_CAN_QAT':27, 'A_MEX_KOR':28,
+  'D_USA_AUS':29, 'C_MAR_SCO':30, 'C_BRA_HAI':31, 'D_PAR_TUR':32,
+  'F_NED_SWE':33, 'E_GER_CIV':34, 'E_CUW_ECU':35, 'F_JPN_TUN':36,
+  'H_ESP_KSA':37, 'G_BEL_IRN':38, 'H_CPV_URU':39, 'G_EGY_NZL':40,
+  'J_ARG_AUT':41, 'I_FRA_IRQ':42, 'I_SEN_NOR':43, 'J_ALG_JOR':44,
+  'K_POR_UZB':45, 'L_ENG_GHA':46, 'L_CRO_PAN':47, 'K_COD_COL':48,
+  'B_CAN_SUI':49, 'B_BIH_QAT':50, 'C_BRA_SCO':51, 'C_MAR_HAI':52,
+  'A_MEX_CZE':53, 'A_RSA_KOR':54,
+  'E_GER_ECU':55, 'E_CUW_CIV':56, 'F_JPN_SWE':57, 'F_NED_TUN':58,
+  'D_USA_TUR':59, 'D_PAR_AUS':60,
+  'I_FRA_NOR':61, 'I_SEN_IRQ':62,
+  'H_CPV_KSA':63, 'H_ESP_URU':64, 'G_EGY_IRN':65, 'G_BEL_NZL':66,
+  'L_ENG_PAN':67, 'L_CRO_GHA':68, 'K_POR_COL':69, 'K_COD_UZB':70,
+  'J_ALG_AUT':71, 'J_ARG_JOR':72,
+};
+
+// Short Norwegian date label per game (UTC kick-off date)
+const GAME_DATE_LABELS = {
+  'A_MEX_RSA':'11. jun','A_KOR_CZE':'12. jun',
+  'B_CAN_BIH':'12. jun','D_USA_PAR':'13. jun',
+  'B_QAT_SUI':'13. jun','C_BRA_MAR':'13. jun','C_HAI_SCO':'14. jun','D_AUS_TUR':'14. jun',
+  'E_GER_CUW':'14. jun','F_NED_JPN':'14. jun','E_CIV_ECU':'14. jun','F_SWE_TUN':'15. jun',
+  'H_ESP_CPV':'15. jun','G_BEL_EGY':'15. jun','H_KSA_URU':'15. jun','G_IRN_NZL':'16. jun',
+  'I_FRA_SEN':'16. jun','I_NOR_IRQ':'16. jun','J_ARG_ALG':'17. jun','J_AUT_JOR':'17. jun',
+  'K_POR_COD':'17. jun','L_ENG_CRO':'17. jun','L_GHA_PAN':'17. jun','K_UZB_COL':'18. jun',
+  'A_RSA_CZE':'18. jun','B_BIH_SUI':'18. jun','B_CAN_QAT':'18. jun','A_MEX_KOR':'19. jun',
+  'D_USA_AUS':'19. jun','C_MAR_SCO':'19. jun','C_BRA_HAI':'20. jun','D_PAR_TUR':'20. jun',
+  'F_NED_SWE':'20. jun','E_GER_CIV':'20. jun','E_CUW_ECU':'21. jun','F_JPN_TUN':'21. jun',
+  'H_ESP_KSA':'21. jun','G_BEL_IRN':'21. jun','H_CPV_URU':'21. jun','G_EGY_NZL':'22. jun',
+  'J_ARG_AUT':'22. jun','I_FRA_IRQ':'22. jun','I_SEN_NOR':'23. jun','J_ALG_JOR':'23. jun',
+  'K_POR_UZB':'23. jun','L_ENG_GHA':'23. jun','L_CRO_PAN':'23. jun','K_COD_COL':'24. jun',
+  'B_CAN_SUI':'24. jun','B_BIH_QAT':'24. jun','C_BRA_SCO':'24. jun','C_MAR_HAI':'24. jun',
+  'A_MEX_CZE':'25. jun','A_RSA_KOR':'25. jun',
+  'E_GER_ECU':'25. jun','E_CUW_CIV':'25. jun','F_JPN_SWE':'25. jun','F_NED_TUN':'25. jun',
+  'D_USA_TUR':'26. jun','D_PAR_AUS':'26. jun',
+  'I_FRA_NOR':'26. jun','I_SEN_IRQ':'26. jun',
+  'H_CPV_KSA':'27. jun','H_ESP_URU':'27. jun','G_EGY_IRN':'27. jun','G_BEL_NZL':'27. jun',
+  'L_ENG_PAN':'27. jun','L_CRO_GHA':'27. jun','K_POR_COL':'27. jun','K_COD_UZB':'27. jun',
+  'J_ALG_AUT':'28. jun','J_ARG_JOR':'28. jun',
+};
+
+// Generate all 6 games per group, tagged with official match number and date
 function generateGroupGames(groupId) {
   const teams = GROUPS[groupId];
   const games = [];
   for (let i = 0; i < teams.length; i++) {
     for (let j = i + 1; j < teams.length; j++) {
-      games.push({ id: `${groupId}_${teams[i]}_${teams[j]}`, group: groupId, home: teams[i], away: teams[j] });
+      const id = `${groupId}_${teams[i]}_${teams[j]}`;
+      games.push({
+        id,
+        group: groupId,
+        home: teams[i],
+        away: teams[j],
+        matchNum: GAME_MATCH_NUMS[id] || 999,
+        dateLabel: GAME_DATE_LABELS[id] || '',
+      });
     }
   }
+  games.sort((a, b) => a.matchNum - b.matchNum);
   return games;
 }
 
 const GROUP_GAMES = {};
 Object.keys(GROUPS).forEach(g => { GROUP_GAMES[g] = generateGroupGames(g); });
-const ALL_GAMES = Object.values(GROUP_GAMES).flat();
+const ALL_GAMES = Object.values(GROUP_GAMES).flat().sort((a, b) => a.matchNum - b.matchNum);
 
 // Knockout bracket structure — OFFICIAL FIFA World Cup 2026 layout (matches M73–M104).
 // Slots: '1X' = group X winner, '2X' = group X runner-up, 'T_<matchId>' = best-third slot

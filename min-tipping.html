@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Min tipping – VM 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800;900&family=Barlow+Condensed:ital,wght@0,700;0,800;0,900&display=swap" rel="stylesheet">
+<style>
+@font-face{font-family:"TwemojiFlags";unicode-range:U+1F1E6-1F1FF,U+1F3F4,U+E0062-E0063,U+E0065,U+E0067,U+E006C,U+E006E,U+E0073-E0074,U+E0077,U+E007F;src:url('https://cdn.jsdelivr.net/npm/country-flag-emoji-polyfill@0.1/dist/TwemojiCountryFlags.woff2') format('woff2');font-display:swap;}
+:root{
+  --bg:#070d18;--surface:#0d1826;--card:#122030;--elevated:#19304a;
+  --accent:#00d96a;--accent2:rgba(0,217,106,.12);
+  --red:#ff4f5e;--red2:rgba(255,79,94,.1);--gold:#ffd700;
+  --txt:#e8f0fa;--txt2:#7a9cc0;--txt3:#3d5670;
+  --border:rgba(255,255,255,.07);--r:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--txt);font-family:"TwemojiFlags",'Barlow',sans-serif;min-height:100vh;}
+
+/* ── Topbar ── */
+.topbar{display:flex;align-items:center;gap:10px;padding:0 20px;height:52px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;}
+.topbar img{height:26px;width:26px;object-fit:contain;opacity:.7;}
+.topbar-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;letter-spacing:.04em;color:var(--accent);text-transform:uppercase;}
+.topbar-right{margin-left:auto;display:flex;gap:10px;align-items:center;}
+.topbar-right a{color:var(--txt2);font-size:13px;font-weight:600;text-decoration:none;padding:6px 10px;border-radius:6px;border:1px solid var(--border);}
+.topbar-right a:hover{color:var(--txt);border-color:rgba(255,255,255,.15);}
+
+/* ── Shell ── */
+.shell{max-width:900px;margin:0 auto;padding:24px 16px 60px;}
+
+/* ── Lookup ── */
+.lookup-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:24px;text-align:center;}
+.lookup-title{font-family:'Barlow Condensed',sans-serif;font-size:52px;font-weight:900;text-transform:uppercase;line-height:.95;}
+.lookup-title span{color:var(--accent);}
+.lookup-sub{font-size:16px;color:var(--txt2);}
+.lookup-form{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;width:100%;max-width:460px;}
+.lookup-input{flex:1;min-width:220px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 16px;color:var(--txt);font-size:15px;font-family:'Barlow',sans-serif;outline:none;}
+.lookup-input:focus{border-color:var(--accent);}
+.lookup-btn{background:var(--accent);color:#000;border:none;border-radius:8px;padding:12px 20px;font-size:14px;font-weight:800;font-family:'Barlow',sans-serif;cursor:pointer;white-space:nowrap;}
+.lookup-btn:hover{background:#00f07a;}
+.lookup-err{color:var(--red);font-size:14px;}
+
+/* ── Profile header ── */
+.profile-bar{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 20px;margin-bottom:24px;}
+.profile-avatar{width:44px;height:44px;border-radius:50%;background:var(--accent2);border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;color:var(--accent);flex-shrink:0;}
+.profile-name{font-weight:800;font-size:18px;}
+.profile-email{font-size:13px;color:var(--txt2);}
+.profile-score{margin-left:auto;text-align:right;}
+.profile-score-num{font-family:'Barlow Condensed',sans-serif;font-size:36px;font-weight:900;color:var(--accent);line-height:1;}
+.profile-score-lbl{font-size:12px;color:var(--txt2);font-weight:600;}
+.switch-btn{background:transparent;border:1px solid var(--border);color:var(--txt2);border-radius:6px;padding:6px 12px;font-size:12px;font-family:'Barlow',sans-serif;cursor:pointer;white-space:nowrap;}
+.switch-btn:hover{border-color:rgba(255,255,255,.2);color:var(--txt);}
+
+/* ── Tabs ── */
+.tabs{display:flex;gap:4px;margin-bottom:20px;background:var(--surface);border-radius:10px;padding:4px;}
+.tab{flex:1;padding:9px 4px;text-align:center;font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--txt2);cursor:pointer;border-radius:8px;transition:all .15s;}
+.tab:hover{color:var(--txt);}
+.tab.active{background:var(--elevated);color:var(--txt);}
+
+/* ── Section header ── */
+.section-title{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:var(--txt2);margin:24px 0 12px;}
+.section-title:first-child{margin-top:0;}
+
+/* ── Group block ── */
+.group-block{margin-bottom:20px;}
+.group-label{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--txt3);padding:7px 14px;background:var(--elevated);border-radius:8px 8px 0 0;border:1px solid var(--border);border-bottom:none;}
+.match-list{background:var(--card);border:1px solid var(--border);border-radius:0 0 8px 8px;overflow:hidden;}
+
+.match-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:10px 14px 10px 18px;border-bottom:1px solid var(--border);gap:8px;position:relative;}
+.match-row:last-child{border-bottom:none;}
+.match-row.correct{background:rgba(0,217,106,.05);}
+.match-row.correct::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);}
+.match-row.wrong{background:rgba(255,79,94,.04);}
+.match-row.wrong::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--red);}
+
+.match-team{display:flex;align-items:center;gap:6px;font-size:14px;font-weight:600;}
+.match-team.home{justify-content:flex-end;text-align:right;}
+.match-team.away{justify-content:flex-start;}
+.match-flag{font-size:16px;line-height:1;}
+
+.scores-col{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:80px;}
+.score-box{display:flex;align-items:center;justify-content:center;gap:4px;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:17px;letter-spacing:.04em;}
+.score-box.user-score{color:var(--txt);}
+.score-box.real-score{font-size:13px;color:var(--txt3);}
+.score-box.real-score.played{color:var(--txt2);}
+.score-dash{color:var(--txt3);}
+.outcome-dot{width:6px;height:6px;border-radius:50%;background:var(--txt3);display:inline-block;}
+.outcome-dot.correct{background:var(--accent);}
+.outcome-dot.wrong{background:var(--red);}
+.not-played{font-size:11px;color:var(--txt3);font-style:italic;}
+.match-date{position:absolute;right:10px;top:6px;font-size:10px;color:var(--txt3);letter-spacing:.03em;font-weight:600;}
+
+/* ── Knockout rounds ── */
+.ko-round{margin-bottom:28px;}
+.ko-round-header{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.ko-round-title{font-family:'Barlow Condensed',sans-serif;font-size:20px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;}
+.ko-round-sub{font-size:13px;color:var(--txt2);}
+.ko-round-pts{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:900;color:var(--accent);margin-left:auto;background:var(--accent2);border:1px solid rgba(0,217,106,.2);border-radius:6px;padding:3px 10px;}
+
+.ko-team-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;}
+.ko-team-card{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:14px;font-weight:600;position:relative;overflow:hidden;}
+.ko-team-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:transparent;}
+.ko-team-card.correct{background:var(--accent2);border-color:rgba(0,217,106,.25);}
+.ko-team-card.correct::before{background:var(--accent);}
+.ko-team-card.correct .ko-team-name{color:var(--accent);}
+.ko-team-card.wrong{background:var(--red2);border-color:rgba(255,79,94,.2);}
+.ko-team-card.wrong::before{background:var(--red);}
+.ko-team-card.wrong .ko-team-name{color:var(--txt2);}
+.ko-team-flag{font-size:20px;line-height:1;}
+.ko-team-name{flex:1;line-height:1.2;}
+.ko-check{font-size:14px;margin-left:auto;}
+
+/* ── Awards ── */
+.awards-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+@media(max-width:540px){.awards-grid{grid-template-columns:1fr;}}
+.award-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column;gap:6px;}
+.award-card.correct-card{background:var(--accent2);border-color:rgba(0,217,106,.25);}
+.award-card.gold-card{background:rgba(255,215,0,.06);border-color:rgba(255,215,0,.2);}
+.award-label{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--txt2);}
+.award-card.gold-card .award-label{color:rgba(255,215,0,.6);}
+.award-user-pick{font-size:17px;font-weight:700;color:var(--txt);}
+.award-actual{font-size:13px;color:var(--txt3);display:flex;align-items:center;gap:6px;margin-top:2px;}
+.award-actual-val{color:var(--txt2);}
+.award-pts{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:800;color:var(--accent);background:var(--accent2);border:1px solid rgba(0,217,106,.2);border-radius:5px;padding:2px 8px;margin-top:4px;align-self:flex-start;}
+.award-pts.zero{color:var(--txt3);background:transparent;border-color:var(--border);}
+.pending-lbl{font-size:12px;color:var(--txt3);font-style:italic;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <img src="assets/consort_logo.png" alt="Consort">
+  <div class="topbar-title">VM 2026 Tipping</div>
+  <div class="topbar-right">
+    <a href="leaderboard.html">📊 Tabell</a>
+    <a href="index.html">⚽ Lever tipping</a>
+  </div>
+</div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="data.js"></script>
+
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useCallback } = React;
+
+const SUPABASE_URL = 'https://pwqdgulwrddltujjefme.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3cWRndWx3cmRkbHR1amplZm1lIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY3OTQ0NjgsImV4cCI6MjA5MjM3MDQ2OH0.H9f_cprE1SWJK5l76gBAPzfvsmMjtXGkE7D3E7vPkMA';
+
+function lsGet(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }
+function lsSet(k, v) { localStorage.setItem(k, JSON.stringify(v)); }
+
+const ROUND_LABELS = { R32:'16-delsfinaler', R16:'Åttendelsfinaler', QF:'Kvartfinaler', SF:'Semifinaler' };
+const ROUND_COUNT  = { R32:16, R16:8, QF:4, SF:2 };
+
+async function sbHeaders() {
+  return { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` };
+}
+
+async function fetchTippingByEmail(email) {
+  const headers = await sbHeaders();
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/tippinger?email=eq.${encodeURIComponent(email)}&select=data&limit=1`,
+    { headers }
+  );
+  const arr = await res.json();
+  return arr?.[0]?.data || null;
+}
+
+async function fetchAdminResults() {
+  const headers = await sbHeaders();
+  const res = await fetch(
+    `${SUPABASE_URL}/rest/v1/resultater?select=data&order=oppdatert_tid.desc&limit=1`,
+    { headers }
+  );
+  const arr = await res.json();
+  return arr?.[0]?.data || lsGet('vm26_admin_results') || null;
+}
+
+// ── outcome helpers ──────────────────────────────────────────────────────────
+function getOutcome(h, a) {
+  const hi = parseInt(h), ai = parseInt(a);
+  if (isNaN(hi) || isNaN(ai)) return null;
+  return hi > ai ? 'H' : hi < ai ? 'A' : 'D';
+}
+
+function scoreBreakdownMinTipping(tipping, admin) {
+  const bd = { groupOutcomes:0, groupPositions:0, ko:{R32:0,R16:0,QF:0,SF:0}, finalists:0, bronze:0, champion:0, scorer:0, assist:0 };
+  if (!admin) return bd;
+
+  ALL_GAMES.forEach(g => {
+    if (!isGamePlayed(admin.groupScores, g.id)) return;
+    const u = tipping.groupScores?.[g.id], r = admin.groupScores?.[g.id];
+    if (!u || !r) return;
+    if (getOutcome(u.home, u.away) === getOutcome(r.home, r.away)) bd.groupOutcomes++;
+  });
+  Object.keys(GROUPS).forEach(grp => {
+    if (!isGroupComplete(admin.groupScores, grp)) return;
+    const uS = calcStandings(grp, tipping.groupScores||{}), rS = calcStandings(grp, admin.groupScores||{});
+    uS.forEach((e,i) => { if (rS[i]?.team === e.team) bd.groupPositions++; });
+  });
+  ['R32','R16','QF','SF'].forEach(rk => {
+    const ms = {R32,R16,QF,SF}[rk];
+    const real = new Set(ms.map(m => admin.knockoutResults?.[m.id]).filter(Boolean));
+    const counted = new Set();
+    ms.forEach(m => {
+      const t = tipping.knockoutPicks?.[m.id];
+      if (t && real.has(t) && !counted.has(t)) { counted.add(t); bd.ko[rk] += 2; }
+    });
+  });
+  const rF = [admin.knockoutResults?.['SF_1'], admin.knockoutResults?.['SF_2']].filter(Boolean);
+  [tipping.knockoutPicks?.['SF_1'], tipping.knockoutPicks?.['SF_2']].forEach(t => { if (t && rF.includes(t)) bd.finalists++; });
+  if (tipping.knockoutPicks?.['BRONZE'] && tipping.knockoutPicks['BRONZE'] === admin.knockoutResults?.['BRONZE']) bd.bronze = 1;
+  if (tipping.knockoutPicks?.['FINAL']  && tipping.knockoutPicks['FINAL']  === admin.knockoutResults?.['FINAL'])  bd.champion = 5;
+  const norm = s => (s||'').trim().toLowerCase();
+  if (admin.topScorer && norm(tipping.topScorer) === norm(admin.topScorer)) bd.scorer = 4;
+  if (admin.topAssist && norm(tipping.topAssist) === norm(admin.topAssist)) bd.assist = 3;
+  return bd;
+}
+
+// ── Lookup screen ────────────────────────────────────────────────────────────
+function LookupScreen({ onFound }) {
+  const [email, setEmail] = useState(lsGet('mt_last_email') || '');
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
+
+  async function lookup(e) {
+    e.preventDefault();
+    const em = email.trim().toLowerCase();
+    if (!em) return;
+    setLoading(true); setErr('');
+    try {
+      let tipping = null;
+      // Try Supabase first
+      if (SUPABASE_URL && SUPABASE_KEY) {
+        tipping = await fetchTippingByEmail(em);
+      }
+      // localStorage fallback
+      if (!tipping) {
+        const all = lsGet('vm26_submitted_tippings') || [];
+        tipping = all.find(t => t?.user?.email === em) || null;
+      }
+      if (!tipping) { setErr('Fant ingen tipping på denne e-postadressen. Sjekk stavemåten.'); return; }
+      lsSet('mt_last_email', em);
+      onFound(tipping);
+    } catch(ex) {
+      setErr('Noe gikk galt, prøv igjen.');
+    } finally { setLoading(false); }
+  }
+
+  return (
+    <div className="lookup-wrap">
+      <div>
+        <div className="lookup-title">Din<br/><span>tipping</span></div>
+      </div>
+      <div className="lookup-sub">Skriv inn Consort-epostadressen du registrerte deg med</div>
+      <form className="lookup-form" onSubmit={lookup}>
+        <input className="lookup-input" type="email" placeholder="navn@consort.no" value={email}
+          onChange={e => setEmail(e.target.value)} autoFocus autoComplete="email" />
+        <button className="lookup-btn" type="submit" disabled={loading}>
+          {loading ? '…' : 'Finn tipping'}
+        </button>
+      </form>
+      {err && <div className="lookup-err">{err}</div>}
+    </div>
+  );
+}
+
+// ── Group stage tab ──────────────────────────────────────────────────────────
+function GroupTab({ tipping, admin }) {
+  return (
+    <div>
+      {Object.keys(GROUPS).map(grp => {
+        const games = GROUP_GAMES[grp];
+        return (
+          <div key={grp} className="group-block">
+            <div className="group-label">Gruppe {grp}</div>
+            <div className="match-list">
+              {games.map(game => {
+                const uScore  = tipping.groupScores?.[game.id];
+                const rScore  = admin?.groupScores?.[game.id];
+                const played  = rScore?.played === true;
+                const uOut    = uScore ? getOutcome(uScore.home, uScore.away) : null;
+                const rOut    = played ? getOutcome(rScore.home, rScore.away) : null;
+                const isCorrect = played && uOut && rOut && uOut === rOut;
+                const isWrong   = played && uOut && rOut && uOut !== rOut;
+                return (
+                  <div key={game.id} className={`match-row ${isCorrect?'correct':''} ${isWrong?'wrong':''}`}>
+                      {game.dateLabel && <span className="match-date">{game.dateLabel}</span>}
+                    <div className="match-team home">
+                      <span className="match-flag">{TEAMS[game.home]?.flag}</span>
+                      <span>{TEAMS[game.home]?.name}</span>
+                    </div>
+                    <div className="scores-col">
+                      <div className="score-box user-score">
+                        <span>{uScore?.home ?? '?'}</span>
+                        <span className="score-dash">–</span>
+                        <span>{uScore?.away ?? '?'}</span>
+                      </div>
+                      {played ? (
+                        <div className="score-box real-score played">
+                          <span>{rScore.home}</span>
+                          <span className="score-dash">–</span>
+                          <span>{rScore.away}</span>
+                        </div>
+                      ) : (
+                        <div className="not-played">ikke spilt</div>
+                      )}
+                      <span className={`outcome-dot ${isCorrect?'correct':''} ${isWrong?'wrong':''}`}></span>
+                    </div>
+                    <div className="match-team away">
+                      <span className="match-flag">{TEAMS[game.away]?.flag}</span>
+                      <span>{TEAMS[game.away]?.name}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Knockout tab ─────────────────────────────────────────────────────────────
+function KnockoutTab({ tipping, admin, bd }) {
+  return (
+    <div>
+      {['R32','R16','QF','SF'].map(rk => {
+        const ms = {R32,R16,QF,SF}[rk];
+        const realAdvanced = new Set(ms.map(m => admin?.knockoutResults?.[m.id]).filter(Boolean));
+        const roundPublished = realAdvanced.size === ROUND_COUNT[rk];
+        const userPicks = ms.map(m => tipping.knockoutPicks?.[m.id]).filter(Boolean);
+        const uniquePicks = [...new Set(userPicks)];
+
+        return (
+          <div key={rk} className="ko-round">
+            <div className="ko-round-header">
+              <div>
+                <div className="ko-round-title">{ROUND_LABELS[rk]}</div>
+                <div className="ko-round-sub">
+                  {uniquePicks.length} lag tippet videre
+                  {roundPublished ? ` · ${realAdvanced.size} faktisk videre` : ' · venter på resultater'}
+                </div>
+              </div>
+              {roundPublished && (
+                <div className="ko-round-pts">+{bd.ko[rk]} p</div>
+              )}
+            </div>
+            <div className="ko-team-grid">
+              {uniquePicks.length === 0 ? (
+                <div style={{color:'var(--txt3)',fontStyle:'italic',fontSize:14}}>Ingen picks registrert for denne runden.</div>
+              ) : uniquePicks.map(team => {
+                const isCorrect = roundPublished && realAdvanced.has(team);
+                const isWrong   = roundPublished && !realAdvanced.has(team);
+                return (
+                  <div key={team} className={`ko-team-card ${isCorrect?'correct':''} ${isWrong?'wrong':''}`}>
+                    <span className="ko-team-flag">{TEAMS[team]?.flag}</span>
+                    <span className="ko-team-name">{TEAMS[team]?.name || team}</span>
+                    {roundPublished && (
+                      <span className="ko-check">{isCorrect ? '✓' : '✗'}</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Awards tab ───────────────────────────────────────────────────────────────
+function AwardsTab({ tipping, admin, bd }) {
+  const fmt = t => TEAMS[t] ? `${TEAMS[t].flag} ${TEAMS[t].name}` : (t || '–');
+
+  const champion  = tipping.knockoutPicks?.['FINAL'];
+  const bronze    = tipping.knockoutPicks?.['BRONZE'];
+  const aChamp    = admin?.knockoutResults?.['FINAL'];
+  const aBronze   = admin?.knockoutResults?.['BRONZE'];
+
+  function AwardCard({ label, userPick, actualVal, pts, maxPts, gold }) {
+    const hasResult = !!actualVal;
+    const isCorrect = hasResult && pts > 0;
+    return (
+      <div className={`award-card ${isCorrect?'correct-card':''} ${gold?'gold-card':''}`}>
+        <div className="award-label">{label}</div>
+        <div className="award-user-pick">{userPick || <span style={{color:'var(--txt3)',fontStyle:'italic'}}>–</span>}</div>
+        {hasResult ? (
+          <div className="award-actual">
+            Faktisk: <span className="award-actual-val">{actualVal}</span>
+          </div>
+        ) : (
+          <div className="pending-lbl">Ikke kåret ennå</div>
+        )}
+        <div className={`award-pts ${pts===0?'zero':''}`}>
+          {hasResult ? (pts > 0 ? `+${pts} p ✓` : `+0 p`) : `Potensiell: ${maxPts} p`}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="section-title">🏆 Kåringer</div>
+      <div className="awards-grid">
+        <AwardCard
+          label="VM-vinner" gold
+          userPick={champion ? fmt(champion) : null}
+          actualVal={aChamp ? fmt(aChamp) : null}
+          pts={bd.champion} maxPts={5}
+        />
+        <AwardCard
+          label="Bronsevinner"
+          userPick={bronze ? fmt(bronze) : null}
+          actualVal={aBronze ? fmt(aBronze) : null}
+          pts={bd.bronze} maxPts={1}
+        />
+        <AwardCard
+          label="⚽ Toppscorer"
+          userPick={tipping.topScorer || null}
+          actualVal={admin?.topScorer || null}
+          pts={bd.scorer} maxPts={4}
+        />
+        <AwardCard
+          label="🎯 Topp-assist"
+          userPick={tipping.topAssist || null}
+          actualVal={admin?.topAssist || null}
+          pts={bd.assist} maxPts={3}
+        />
+      </div>
+
+      {/* Finalister */}
+      <div className="section-title" style={{marginTop:28}}>🎽 Finalister</div>
+      <div style={{background:'var(--card)',border:'1px solid var(--border)',borderRadius:'var(--r)',padding:'16px 20px',display:'flex',flexDirection:'column',gap:10}}>
+        <div style={{fontSize:13,color:'var(--txt2)'}}>Lagene du tippa til finalen (SF-vinnerne)</div>
+        {['SF_1','SF_2'].map(sfId => {
+          const team = tipping.knockoutPicks?.[sfId];
+          const rF   = [admin?.knockoutResults?.['SF_1'], admin?.knockoutResults?.['SF_2']].filter(Boolean);
+          const published = rF.length === 2;
+          const isCorrect = published && team && rF.includes(team);
+          const isWrong   = published && team && !rF.includes(team);
+          return (
+            <div key={sfId} style={{display:'flex',alignItems:'center',gap:10,padding:'8px 0',borderTop:'1px solid var(--border)'}}>
+              <span style={{fontSize:22}}>{team ? TEAMS[team]?.flag : '🏳'}</span>
+              <span style={{fontWeight:700,color:isCorrect?'var(--accent)':isWrong?'var(--txt3)':'var(--txt)',fontSize:15}}>
+                {team ? TEAMS[team]?.name : '–'}
+              </span>
+              {published && <span style={{marginLeft:'auto',fontWeight:800,fontSize:14,color:isCorrect?'var(--accent)':'var(--red)'}}>{isCorrect?'✓ Finalist':'✗'}</span>}
+              {!published && <span style={{marginLeft:'auto',fontSize:12,color:'var(--txt3)',fontStyle:'italic'}}>Venter…</span>}
+            </div>
+          );
+        })}
+        {admin?.knockoutResults?.['SF_1'] && (
+          <div style={{fontSize:12,color:'var(--txt3)',marginTop:4}}>
+            Du fikk {bd.finalists}/2 finalister riktig · <span style={{color:'var(--accent)'}}>+{bd.finalists} p</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Main App ─────────────────────────────────────────────────────────────────
+function App() {
+  const [tipping, setTipping] = useState(null);
+  const [admin,   setAdmin]   = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [tab,     setTab]     = useState('group');
+
+  // Auto-try last email on mount
+  useEffect(() => {
+    const saved = lsGet('mt_last_email');
+    if (saved) {
+      setLoading(true);
+      Promise.all([
+        fetchTippingByEmail(saved).catch(() => null),
+        fetchAdminResults().catch(() => null),
+      ]).then(([tip, adm]) => {
+        if (tip) setTipping(tip);
+        setAdmin(adm);
+      }).finally(() => setLoading(false));
+    } else {
+      fetchAdminResults().catch(() => null).then(adm => setAdmin(adm));
+    }
+  }, []);
+
+  async function onFound(tip) {
+    setLoading(true);
+    try {
+      const adm = await fetchAdminResults().catch(() => null);
+      setAdmin(adm);
+      setTipping(tip);
+    } finally { setLoading(false); }
+  }
+
+  function switchUser() {
+    lsSet('mt_last_email', null);
+    localStorage.removeItem('mt_last_email');
+    setTipping(null);
+  }
+
+  const bd = tipping ? scoreBreakdownMinTipping(tipping, admin) : null;
+  const totalPts = bd ? (
+    bd.groupOutcomes + bd.groupPositions +
+    Object.values(bd.ko).reduce((s,v)=>s+v,0) +
+    bd.finalists + bd.bronze + bd.champion + bd.scorer + bd.assist
+  ) : 0;
+
+  if (loading) {
+    return (
+      <div className="shell" style={{display:'flex',justifyContent:'center',alignItems:'center',minHeight:'60vh'}}>
+        <div style={{color:'var(--txt2)',fontSize:16}}>Laster…</div>
+      </div>
+    );
+  }
+
+  if (!tipping) {
+    return <div className="shell"><LookupScreen onFound={onFound} /></div>;
+  }
+
+  const name  = tipping.user?.name  || 'Ukjent';
+  const email = tipping.user?.email || '';
+
+  return (
+    <div className="shell">
+      {/* Profile bar */}
+      <div className="profile-bar">
+        <div className="profile-avatar">{name.charAt(0).toUpperCase()}</div>
+        <div>
+          <div className="profile-name">{name}</div>
+          <div className="profile-email">{email}</div>
+        </div>
+        <div className="profile-score">
+          <div className="profile-score-num">{totalPts}</div>
+          <div className="profile-score-lbl">poeng</div>
+        </div>
+        <button className="switch-btn" onClick={switchUser}>Bytt bruker</button>
+      </div>
+
+      {/* Tabs */}
+      <div className="tabs">
+        <div className={`tab ${tab==='group'?'active':''}`} onClick={()=>setTab('group')}>Gruppespill</div>
+        <div className={`tab ${tab==='ko'?'active':''}`} onClick={()=>setTab('ko')}>Sluttspill</div>
+        <div className={`tab ${tab==='awards'?'active':''}`} onClick={()=>setTab('awards')}>Kåringer</div>
+      </div>
+
+      {tab === 'group'  && <GroupTab   tipping={tipping} admin={admin} />}
+      {tab === 'ko'     && <KnockoutTab tipping={tipping} admin={admin} bd={bd} />}
+      {tab === 'awards' && <AwardsTab   tipping={tipping} admin={admin} bd={bd} />}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
