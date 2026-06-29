@@ -248,13 +248,25 @@ function isGroupComplete(adminGroupScores, groupId) {
   return GROUP_GAMES[groupId].every(g => isGamePlayed(adminGroupScores, g.id));
 }
 
-// Assign the 8 qualifying third-placed teams to their R32 slots, respecting FIFA's
-// eligible-group clusters (THIRD_SLOT_ORDER). Returns a map { matchId: groupLetter }.
-// Uses bipartite matching (augmenting paths) so a complete, valid assignment is always
-// found when one exists — and a third can never be placed against a winner it could not
-// face in reality (the clusters already exclude same-group rematches).
+// FIFA's OFFICIAL assignment of the 8 best third-placed teams to R32 slots
+// (Annex C). The 2026 knockout bracket is fixed — no redraws — so once the set
+// of groups that produced a qualifying third-placed team is known, the slot each
+// third occupies is fully determined. Keyed by the sorted list of those groups.
+// Real tournament set {B,D,E,F,I,J,K,L} → checkpoint: 1I (France) meets 3F (Sweden) in R32_5.
+const THIRD_ASSIGNMENT_TABLE = {
+  'B,D,E,F,I,J,K,L': { R32_2:'D', R32_5:'F', R32_7:'E', R32_8:'K', R32_9:'B', R32_10:'I', R32_13:'J', R32_15:'L' },
+};
+
+// Assign the 8 qualifying third-placed teams to their R32 slots.
+// Uses FIFA's official table when the qualifying-group set is known; otherwise
+// falls back to bipartite matching against the eligible-group clusters
+// (THIRD_SLOT_ORDER) so a complete, valid assignment is still produced.
+// Returns a map { matchId: groupLetter }.
 function assignThirdSlots(thirdPlace) {
   const qualGroups = (thirdPlace || []).map(c => TEAMS[c]?.group).filter(Boolean);
+  const key = [...qualGroups].sort().join(',');
+  if (THIRD_ASSIGNMENT_TABLE[key]) return { ...THIRD_ASSIGNMENT_TABLE[key] };
+
   const slots = THIRD_SLOT_ORDER;
   const groupToSlot = {}; // groupLetter -> slot index currently holding it
 
